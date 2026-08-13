@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 // models
 import '../models/task.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -20,14 +19,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadTasks(); 
+    _loadTasks();
   }
 
   // 3. LOAD: Get data from phone memory
   Future<void> _loadTasks() async {
     final prefs = await SharedPreferences.getInstance();
     final String? tasksString = prefs.getString('saved_tasks');
-    
+
     if (tasksString != null) {
       setState(() {
         // Use the decoder we built in task.dart
@@ -36,7 +35,15 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       // Optional: If first time opening app, add a welcome task
       setState(() {
-        tasks = [Task(id: '1', name: 'Welcome! Swipe left to delete me.')];
+        tasks = [
+          Task(
+            id: '1',
+            name: 'Welcome! Swipe left to delete.',
+            category: 'General',
+            frequencyInDays: 1,
+            lastCompleted: DateTime.now(), // Sets the date to right now
+          ),
+        ];
       });
     }
   }
@@ -50,29 +57,88 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddTaskDialog() {
-    TextEditingController controller = TextEditingController();
+    TextEditingController nameController = TextEditingController();
+    TextEditingController freqController = TextEditingController(text: "1");
+    String selectedCategory = 'Plant';
+
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Add New Task'),
-          content: TextField(controller: controller, autofocus: true),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-            ElevatedButton(
-              onPressed: () {
-                if (controller.text.isNotEmpty) {
-                  setState(() {
-                    tasks.add(Task(id: DateTime.now().toString(), name: controller.text));
-                  });
-                  _saveTasks(); // <--- SYNC TO STORAGE
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
+        // 1. You MUST have this line here:
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Add New Item'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: "Name"),
+                      autofocus: true,
+                    ),
+                    const SizedBox(height: 15),
+                    DropdownButton<String>(
+                      value: selectedCategory,
+                      isExpanded: true,
+                      items: <String>['Plant', 'Health', 'Home', 'General'].map(
+                        (String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        },
+                      ).toList(),
+                      onChanged: (newValue) {
+                        // 2. This call ONLY works because of 'setDialogState' above
+                        setDialogState(() {
+                          selectedCategory = newValue!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: freqController,
+                      decoration: const InputDecoration(
+                        labelText: "Repeat every (days)",
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (nameController.text.isNotEmpty) {
+                      // This 'setState' updates the main background screen
+                      setState(() {
+                        tasks.add(
+                          Task(
+                            id: DateTime.now().toString(),
+                            name: nameController.text,
+                            category: selectedCategory,
+                            frequencyInDays:
+                                int.tryParse(freqController.text) ?? 1,
+                            lastCompleted: DateTime.now(),
+                          ),
+                        );
+                      });
+                      _saveTasks();
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            );
+          },
+        ); // <--- Close StatefulBuilder
       },
     );
   }
@@ -98,8 +164,12 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(16.0),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.primaryContainer.withOpacity(0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Theme.of(context).colorScheme.primary,
+              ),
               minHeight: 8,
               borderRadius: BorderRadius.circular(10),
             ),
@@ -128,23 +198,105 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                      child: Icon(
+                        Icons.delete,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                     child: ListTile(
                       title: Text(
                         item.name,
                         style: TextStyle(
-                          decoration: item.isDone ? TextDecoration.lineThrough : null,
+                          fontWeight: FontWeight.bold, // Make it pop
+                          decoration: item.isDone
+                              ? TextDecoration.lineThrough
+                              : null,
+                          color: item.isDone
+                              ? Theme.of(context).colorScheme.outline
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      leading: Checkbox(
-                        value: item.isDone,
-                        onChanged: (val) {
-                          setState(() {
-                            item.isDone = val!;
-                          });
-                          _saveTasks(); // <--- SYNC TO STORAGE
-                        },
+                      // --- ADD THE SUBTITLE HERE ---
+                      subtitle: Row(
+                        children: [
+                          // Shows the Category (e.g., Plant)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              item.category,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // Shows the Frequency
+                          Text(
+                            "Every ${item.frequencyInDays} days",
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      leading: SizedBox(
+                        width: 40, // Give it a set width so it stays aligned
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // 1. THE DYNAMIC EMOJI
+                            Text(
+                              item.growthLevel < 30
+                                  ? '🌱'
+                                  : item.growthLevel < 70
+                                  ? '🌿'
+                                  : '🌳',
+                              style: const TextStyle(fontSize: 18),
+                            ),
+
+                            // 2. THE CHECKBOX (Your existing logic moved here)
+                            SizedBox(
+                              height: 24, // Keep it compact
+                              child: Checkbox(
+                                value: item.isDone,
+                                activeColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                onChanged: (val) {
+                                  setState(() {
+                                    item.isDone = val!;
+                                    if (item.isDone) {
+                                      item.growthLevel += 10;
+                                      // item.totalCompletions += 1; // Ensure this is in your task.dart!
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            "${item.name} grew a bit! 🌱",
+                                          ),
+                                          duration: const Duration(seconds: 1),
+                                        ),
+                                      );
+                                    }
+                                  });
+                                  _saveTasks();
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
