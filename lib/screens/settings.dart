@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -23,6 +24,23 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Notifications'),
             subtitle: const Text('Manage reminders'),
             onTap: () => print('Notifications tapped'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.restore),
+            title: const Text('Reset App Data'),
+            subtitle: const Text('Wipes tasks and onboarding status'),
+            onTap: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              // Show a message so you know it worked (Like a Toast in JS)
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Data Cleared! Restart the app.'),
+                  ),
+                );
+              }
+            },
           ),
           const Divider(), // Adds a horizontal line
           ListTile(

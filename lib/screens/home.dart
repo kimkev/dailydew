@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// models
 import '../models/task.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -9,39 +13,59 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Task> tasks = [
-    Task(id: '1', name: 'Your first task! Swipe it left to clear it.'),
-  ];
+  // 1. Start with an empty list (Instead of hardcoding a task here)
+  List<Task> tasks = [];
+
+  // 2. This is your 'useEffect' - it runs once when the screen opens
+  @override
+  void initState() {
+    super.initState();
+    _loadTasks(); 
+  }
+
+  // 3. LOAD: Get data from phone memory
+  Future<void> _loadTasks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? tasksString = prefs.getString('saved_tasks');
+    
+    if (tasksString != null) {
+      setState(() {
+        // Use the decoder we built in task.dart
+        tasks = Task.decode(tasksString);
+      });
+    } else {
+      // Optional: If first time opening app, add a welcome task
+      setState(() {
+        tasks = [Task(id: '1', name: 'Welcome! Swipe left to delete me.')];
+      });
+    }
+  }
+
+  // 4. SAVE: Write data to phone memory
+  Future<void> _saveTasks() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Use the encoder we built in task.dart
+    final String encodedData = Task.encode(tasks);
+    await prefs.setString('saved_tasks', encodedData);
+  }
 
   void _showAddTaskDialog() {
     TextEditingController controller = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Add New Task'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(hintText: "Enter task name..."),
-            autofocus: true,
-          ),
+          content: TextField(controller: controller, autofocus: true),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () {
                 if (controller.text.isNotEmpty) {
                   setState(() {
-                    tasks.add(
-                      Task(
-                        id: DateTime.now().toString(),
-                        name: controller.text,
-                      ),
-                    );
+                    tasks.add(Task(id: DateTime.now().toString(), name: controller.text));
                   });
+                  _saveTasks(); // <--- SYNC TO STORAGE
                   Navigator.pop(context);
                 }
               },
@@ -55,12 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Logic for the progress bar (Optional, but makes it less bland!)
     int completedCount = tasks.where((t) => t.isDone).length;
     double progress = tasks.isEmpty ? 0 : completedCount / tasks.length;
 
     return Scaffold(
-      // Background is now automatically handled by main.dart (surface color)
       appBar: AppBar(
         title: const Text('My Daily Routine'),
         actions: [
@@ -72,7 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // --- PROGRESS SECTION (Makes it look premium) ---
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: LinearProgressIndicator(
@@ -83,20 +104,23 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: tasks.length,
               itemBuilder: (context, index) {
                 final item = tasks[index];
-
-                // Wrap in a Card to use the CardThemeData from main.dart
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: Dismissible(
                     key: Key(item.id),
                     direction: DismissDirection.endToStart,
+                    onDismissed: (direction) {
+                      setState(() {
+                        tasks.removeAt(index);
+                      });
+                      _saveTasks(); // <--- SYNC TO STORAGE
+                    },
                     background: Container(
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.errorContainer,
@@ -104,38 +128,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Icon(Icons.delete, color: Theme.of(context).colorScheme.error), 
+                      child: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
                     ),
-                    onDismissed: (direction) {
-                      setState(() {
-                        tasks.removeAt(index);
-                      });
-                    },
                     child: ListTile(
                       title: Text(
                         item.name,
                         style: TextStyle(
                           decoration: item.isDone ? TextDecoration.lineThrough : null,
-                          // Use theme colors for text
-                          color: item.isDone 
-                            ? Theme.of(context).colorScheme.outline 
-                            : Theme.of(context).colorScheme.onSurface, 
                         ),
                       ),
-                      leading: Checkbox( // Using a Checkbox instead of an Icon feels more modern
+                      leading: Checkbox(
                         value: item.isDone,
-                        activeColor: Theme.of(context).colorScheme.primary,
                         onChanged: (val) {
                           setState(() {
                             item.isDone = val!;
                           });
+                          _saveTasks(); // <--- SYNC TO STORAGE
                         },
                       ),
-                      onTap: () {
-                        setState(() {
-                          item.isDone = !item.isDone;
-                        });
-                      },
                     ),
                   ),
                 );
@@ -144,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended( // 'extended' allows for a label
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddTaskDialog,
         icon: const Icon(Icons.add),
         label: const Text("New Task"),

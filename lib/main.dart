@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // Import the screens
 import 'screens/onboarding.dart';
 import 'screens/home.dart';
 import 'screens/settings.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  // This line is REQUIRED if you do any async work in main()
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final prefs = await SharedPreferences.getInstance();
+  final bool seenOnboarding = prefs.getBool('seenOnboarding') ?? false;
+  runApp(MyApp(seenOnboarding: seenOnboarding));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool seenOnboarding;
+
+  const MyApp({super.key, required this.seenOnboarding});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +55,8 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      initialRoute: '/',
+      // If they've seen onboarding, start at /home, otherwise start at /
+      initialRoute: seenOnboarding ? '/home' : '/',
       routes: {
         '/': (context) => const OnboardingScreen(),
         '/home': (context) => const HomeScreen(),

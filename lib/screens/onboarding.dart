@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -30,8 +31,16 @@ class OnboardingScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                 ),
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/home');
+                onPressed: () async {
+                  // 1. Get the storage instance
+                  final prefs = await SharedPreferences.getInstance();
+                  // 2. Set the flag to true
+                  await prefs.setBool('seenOnboarding', true);
+
+                  // 3. Go to home (using 'if (context.mounted)' is a Flutter best practice for async)
+                  if (context.mounted) {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  }
                 },
                 child: const Text('Get Started'),
               ),
