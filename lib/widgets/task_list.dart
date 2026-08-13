@@ -24,7 +24,7 @@ class TaskList extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
             valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
             minHeight: 8,
             borderRadius: BorderRadius.circular(10),

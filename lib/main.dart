@@ -1,5 +1,7 @@
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'providers/task_provider.dart';
 // Import the screens
 import 'screens/onboarding.dart';
 import 'screens/home.dart';
@@ -11,7 +13,12 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final bool seenOnboarding = prefs.getBool('seenOnboarding') ?? false;
-  runApp(MyApp(seenOnboarding: seenOnboarding));
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => TaskProvider(),
+      child: MyApp(seenOnboarding: seenOnboarding),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
