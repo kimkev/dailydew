@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// widgets
+import '../widgets/garden_view.dart';
+import '../widgets/task_list.dart';
 // models
 import '../models/task.dart';
 
@@ -12,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 1. Start with an empty list (Instead of hardcoding a task here)
+  int _selectedIndex = 0;
   List<Task> tasks = [];
 
   // 2. This is your 'useEffect' - it runs once when the screen opens
@@ -158,154 +161,59 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.primaryContainer.withOpacity(0.3),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                Theme.of(context).colorScheme.primary,
-              ),
-              minHeight: 8,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: tasks.length,
-              itemBuilder: (context, index) {
-                final item = tasks[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Dismissible(
-                    key: Key(item.id),
-                    direction: DismissDirection.endToStart,
-                    onDismissed: (direction) {
-                      setState(() {
-                        tasks.removeAt(index);
-                      });
-                      _saveTasks(); // <--- SYNC TO STORAGE
-                    },
-                    background: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Icon(
-                        Icons.delete,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        item.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold, // Make it pop
-                          decoration: item.isDone
-                              ? TextDecoration.lineThrough
-                              : null,
-                          color: item.isDone
-                              ? Theme.of(context).colorScheme.outline
-                              : Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      // --- ADD THE SUBTITLE HERE ---
-                      subtitle: Row(
-                        children: [
-                          // Shows the Category (e.g., Plant)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Text(
-                              item.category,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          // Shows the Frequency
-                          Text(
-                            "Every ${item.frequencyInDays} days",
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      leading: SizedBox(
-                        width: 40, // Give it a set width so it stays aligned
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // 1. THE DYNAMIC EMOJI
-                            Text(
-                              item.growthLevel < 30
-                                  ? '🌱'
-                                  : item.growthLevel < 70
-                                  ? '🌿'
-                                  : '🌳',
-                              style: const TextStyle(fontSize: 18),
-                            ),
 
-                            // 2. THE CHECKBOX (Your existing logic moved here)
-                            SizedBox(
-                              height: 24, // Keep it compact
-                              child: Checkbox(
-                                value: item.isDone,
-                                activeColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
-                                onChanged: (val) {
-                                  setState(() {
-                                    item.isDone = val!;
-                                    if (item.isDone) {
-                                      item.growthLevel += 10;
-                                      // item.totalCompletions += 1; // Ensure this is in your task.dart!
-
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            "${item.name} grew a bit! 🌱",
-                                          ),
-                                          duration: const Duration(seconds: 1),
-                                        ),
-                                      );
-                                    }
-                                  });
-                                  _saveTasks();
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
+      // The "Single Widget" in the body is now a switcher
+      body: _selectedIndex == 0
+          ? TaskList(
+              tasks: tasks,
+              progress: progress,
+              // Handle the deletion logic here in the Boss file
+              onDelete: (index) {
+                setState(() {
+                  tasks.removeAt(index);
+                });
+                _saveTasks();
               },
-            ),
+              // Handle the checkmark/growth logic here
+              onToggle: (index, isChecked) {
+                setState(() {
+                  tasks[index].isDone = isChecked;
+                  if (isChecked) {
+                    tasks[index].growthLevel += 10;
+                    tasks[index].totalCompletions += 1;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("${tasks[index].name} grew! 🌱"),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  }
+                });
+                _saveTasks();
+              },
+            )
+          : GardenView(tasks: tasks),
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check_circle_outline),
+            label: 'Tasks',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.yard_outlined),
+            label: 'Garden',
           ),
         ],
       ),
+
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddTaskDialog,
         icon: const Icon(Icons.add),
