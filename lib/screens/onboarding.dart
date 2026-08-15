@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/notification_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -89,12 +90,64 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
               // Page 3: Notifications
-              _buildPage(
-                icon: Icons.notifications_active_outlined,
-                title: "Stay Notified",
-                description:
-                    "We'll send gentle reminders so your plants never go thirsty.",
-                color: Colors.orange,
+              // Page 3: Notifications (THE UPDATED VERSION)
+              Padding(
+                padding: const EdgeInsets.all(40.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.notifications_active_outlined,
+                      size: 100,
+                      color: Colors.orange,
+                    ),
+                    const SizedBox(height: 40),
+                    const Text(
+                      "Stay Notified",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "We'll send gentle reminders so your plants never go thirsty.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // --- THE PERMISSION BUTTON ---
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        // 1. Request official system permission
+                        await NotificationService().requestPermissions();
+
+                        // 2. Send a test notification to prove it works
+                        await NotificationService().showInstantNotification(
+                          id: 1, // Any unique number
+                          title: "Reminders Enabled! 🎉",
+                          body:
+                              "You'll now receive alerts when your plants are thirsty.",
+                        );
+                      },
+                      icon: const Icon(Icons.notifications_active),
+                      label: const Text("Enable Reminders"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.orange,
+                        side: const BorderSide(color: Colors.orange),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/notification_service.dart';
 import '../models/task.dart';
 
 class TaskProvider extends ChangeNotifier {
@@ -27,7 +28,7 @@ class TaskProvider extends ChangeNotifier {
     // Load the name we saved during onboarding
     // If it's not there, we default to "Gardener"
     _userName = prefs.getString('userName') ?? "Gardener";
-    
+
     final String? tasksString = prefs.getString('saved_tasks');
 
     if (tasksString != null) {
@@ -63,22 +64,23 @@ class TaskProvider extends ChangeNotifier {
 
   //  Action: Toggle/Growth
   void toggleTask(int index) {
-    // 1. Flip the boolean (Checked becomes Unchecked, or vice-versa)
     _tasks[index].isDone = !_tasks[index].isDone;
 
-    // 2. Logic for when the task is marked as "Done"
     if (_tasks[index].isDone) {
-      // Record the exact time it was watered
       _tasks[index].lastCompleted = DateTime.now();
+      _tasks[index].growthLevel += 5;
 
-      // Increment total completions
+      // --- Increment the Lifetime Stat ---
       _tasks[index].totalCompletions += 1;
 
-      // Keep your existing growth logic (or adjust as you like)
-      _tasks[index].growthLevel += 5;
+      // --- Schedule Reminder ---
+      // We use .hashCode to turn the String ID into an Integer for the notification
+      NotificationService().schedulePlantReminder(
+        id: _tasks[index].id.hashCode,
+        plantName: _tasks[index].name,
+        days: _tasks[index].frequencyInDays,
+      );
     }
-
-    // 3. Save to phone and refresh UI
     _saveTasks();
     notifyListeners();
   }

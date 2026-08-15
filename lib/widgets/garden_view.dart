@@ -51,7 +51,7 @@ class GardenView extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     spreadRadius: 2,
                   )
@@ -75,7 +75,7 @@ class GardenView extends StatelessWidget {
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.white.withOpacity(0.4) : Colors.transparent,
+                            color: isSelected ? Colors.white.withValues(alpha: 0.4) : Colors.transparent,
                             shape: BoxShape.circle,
                             border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
                           ),

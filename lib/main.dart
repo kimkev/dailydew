@@ -2,6 +2,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/task_provider.dart';
+import 'services/notification_service.dart'; 
 // Import the screens
 import 'screens/onboarding.dart';
 import 'screens/home.dart';
@@ -10,6 +11,8 @@ import 'screens/settings.dart';
 void main() async {
   // This line is REQUIRED if you do any async work in main()
   WidgetsFlutterBinding.ensureInitialized();
+
+    await NotificationService().init(); 
 
   final prefs = await SharedPreferences.getInstance();
   final bool seenOnboarding = prefs.getBool('seenOnboarding') ?? false;
