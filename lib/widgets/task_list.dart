@@ -73,7 +73,7 @@ class TaskList extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            item.growthLevel < 30 ? '🌱' : item.growthLevel < 70 ? '🌿' : '🌳',
+            item.emoji,
             style: const TextStyle(fontSize: 18),
           ),
           SizedBox(

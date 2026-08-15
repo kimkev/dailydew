@@ -21,6 +21,21 @@ class Task {
     this.totalCompletions = 0,
   });
 
+  // This check tells us if the time since last completed is greater than the frequency
+  bool get isThirsty {
+    final nextWateringDate = lastCompleted.add(Duration(days: frequencyInDays));
+    return DateTime.now().isAfter(nextWateringDate);
+  }
+
+  // Centralized emoji logic
+  String get emoji {
+    if (growthLevel < 20) return '🌱';
+    if (growthLevel < 40) return '🪴';
+    if (growthLevel < 60) return '🌿';
+    if (growthLevel < 80) return '☘️';
+    return '🌸';
+  }
+
   // Convert to Map
   Map<String, dynamic> toMap() {
     return {
@@ -47,8 +62,8 @@ class Task {
       lastCompleted: map['lastCompleted'] != null
           ? DateTime.parse(map['lastCompleted'])
           : DateTime.now(), // If missing, just use "now"
-      growthLevel: map['growthLevel'] ?? 0, 
-      totalCompletions: map['totalCompletions'] ?? 0, 
+      growthLevel: map['growthLevel'] ?? 0,
+      totalCompletions: map['totalCompletions'] ?? 0,
     );
   }
 
