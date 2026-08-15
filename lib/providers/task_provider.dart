@@ -4,17 +4,30 @@ import '../models/task.dart';
 
 class TaskProvider extends ChangeNotifier {
   List<Task> _tasks = [];
-
+  String? _selectedTaskId;
+  String _userName = "Gardener";
+  String get userName => _userName;
   // Getter to see tasks from the outside
   List<Task> get tasks => _tasks;
+  String? get selectedTaskId => _selectedTaskId;
 
-  // 1. Initialize and Load
+  // Initialize and Load
   TaskProvider() {
     loadTasks();
   }
 
+  void selectTask(String? id) {
+    _selectedTaskId = id;
+    notifyListeners();
+  }
+
   Future<void> loadTasks() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Load the name we saved during onboarding
+    // If it's not there, we default to "Gardener"
+    _userName = prefs.getString('userName') ?? "Gardener";
+    
     final String? tasksString = prefs.getString('saved_tasks');
 
     if (tasksString != null) {
@@ -35,20 +48,20 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 2. Save Logic
+  //  Save Logic
   Future<void> _saveTasks() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('saved_tasks', Task.encode(_tasks));
   }
 
-  // 3. Action: Add
+  // Action: Add
   void addTask(Task task) {
     _tasks.add(task);
     _saveTasks();
     notifyListeners();
   }
 
-  // 4. Action: Toggle/Growth
+  //  Action: Toggle/Growth
   void toggleTask(int index) {
     // 1. Flip the boolean (Checked becomes Unchecked, or vice-versa)
     _tasks[index].isDone = !_tasks[index].isDone;
@@ -70,10 +83,21 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 5. Action: Delete
+  //  Action: Delete
   void deleteTask(int index) {
     _tasks.removeAt(index);
     _saveTasks();
     notifyListeners();
+  }
+
+  // garden position
+  void updateTaskPosition(String id, double x, double y) {
+    final index = _tasks.indexWhere((t) => t.id == id);
+    if (index != -1) {
+      _tasks[index].positionX = x;
+      _tasks[index].positionY = y;
+      _saveTasks();
+      notifyListeners();
+    }
   }
 }

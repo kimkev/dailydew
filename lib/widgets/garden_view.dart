@@ -1,79 +1,100 @@
 import 'package:flutter/material.dart';
-import '../models/task.dart';
+import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
 
 class GardenView extends StatelessWidget {
-  final List<Task> tasks;
-
-  const GardenView({super.key, required this.tasks});
+  const GardenView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (tasks.isEmpty) {
-      return const Center(
-        child: Text("Your garden is empty. Add some habits!"),
-      );
-    }
+    final taskProvider = Provider.of<TaskProvider>(context);
+    final tasks = taskProvider.tasks;
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(20),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, // 2 items per row looks cleaner for "cards"
-        crossAxisSpacing: 15,
-        mainAxisSpacing: 15,
-        childAspectRatio: 0.85, // Makes the cards slightly taller
-      ),
-      itemCount: tasks.length,
-      itemBuilder: (context, index) {
-        final plant = tasks[index];
-        
-        // Calculate a scale factor: starts at 1.0, grows slightly with each point
-        // Every 10 points adds 5% size.
-        double scale = 1.0 + (plant.growthLevel % 20) / 100;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // --- CALCULATION FOR BOUNDARIES ---
+        // We define a 20px "Safe Zone" so plants don't hit the fence
+        double padding = 20.0;
+        double availableWidth = constraints.maxWidth - (padding * 2);
+        double availableHeight = constraints.maxHeight - (padding * 2);
 
-        return Card(
-          elevation: 0,
-          color: Colors.green.withOpacity(0.05),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: Colors.green.withOpacity(0.1)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // TRANSFORM/SCALE: This makes the emoji grow smoothly
-                Transform.scale(
-                  scale: scale,
-                  child: Text(
-                    plant.emoji,
-                    style: const TextStyle(fontSize: 45),
-                  ),
+        return GestureDetector(
+          onTapUp: (details) {
+            if (taskProvider.selectedTaskId != null) {
+              // We "clamp" the tap so it stays inside the safe zone
+              // .clamp ensures the number stays between a min and max
+              double xRaw = details.localPosition.dx - padding;
+              double yRaw = details.localPosition.dy - padding;
+              
+              double xPercent = (xRaw / availableWidth).clamp(0.05, 0.95);
+              double yPercent = (yRaw / availableHeight).clamp(0.05, 0.95);
+
+              taskProvider.updateTaskPosition(
+                taskProvider.selectedTaskId!,
+                xPercent,
+                yPercent,
+              );
+              taskProvider.selectTask(null);
+            }
+          },
+          child: Container(
+            color: const Color(0xFFF1F8E9), // Outer background
+            padding: EdgeInsets.all(padding),
+            child: Container(
+              // --- THE FENCE / BORDER ---
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCEDC8), // Inner grass color
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: Colors.brown.shade300, // Wooden fence color
+                  width: 8,
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  plant.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                
-                // GROWTH BAR: Shows progress to next stage
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: (plant.growthLevel % 20) / 20, // Progress within current stage
-                    backgroundColor: Colors.green.withOpacity(0.1),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
-                    minHeight: 6,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Level ${plant.growthLevel}",
-                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                ),
-              ],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  )
+                ],
+              ),
+              child: Stack(
+                clipBehavior: Clip.none, // Allows us to see the glow if it's near edge
+                children: [
+                  ...tasks.map((plant) {
+                    double x = plant.positionX ?? 0.5;
+                    double y = plant.positionY ?? 0.5;
+                    bool isSelected = taskProvider.selectedTaskId == plant.id;
+
+                    return Positioned(
+                      // Position relative to the inner garden bed
+                      left: x * availableWidth - 30,
+                      top: y * availableHeight - 30,
+                      child: GestureDetector(
+                        onTap: () => taskProvider.selectTask(plant.id),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.white.withOpacity(0.4) : Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(plant.emoji, style: const TextStyle(fontSize: 40)),
+                              Text(
+                                plant.name,
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.brown),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
             ),
           ),
         );

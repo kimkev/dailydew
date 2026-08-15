@@ -9,6 +9,8 @@ class Task {
   DateTime lastCompleted;
   int growthLevel;
   int totalCompletions;
+  double? positionX; // 0.0 to 1.0
+  double? positionY; // 0.0 to 1.0
 
   Task({
     required this.id,
@@ -19,6 +21,8 @@ class Task {
     required this.lastCompleted,
     this.growthLevel = 0, // Starts at 0
     this.totalCompletions = 0,
+    this.positionX,
+    this.positionY,
   });
 
   // This check tells us if the time since last completed is greater than the frequency
@@ -48,6 +52,8 @@ class Task {
           .toIso8601String(), // Dates must be strings in JSON
       'growthLevel': growthLevel,
       'totalCompletions': totalCompletions,
+      'positionX': positionX,
+      'positionY': positionY,
     };
   }
 
@@ -64,6 +70,8 @@ class Task {
           : DateTime.now(), // If missing, just use "now"
       growthLevel: map['growthLevel'] ?? 0,
       totalCompletions: map['totalCompletions'] ?? 0,
+      positionX: map['positionX'] != null ? (map['positionX'] as num).toDouble() : null,
+      positionY: map['positionY'] != null ? (map['positionY'] as num).toDouble() : null,
     );
   }
 
