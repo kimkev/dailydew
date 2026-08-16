@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationService {
   // 1. Create a "Singleton" (one single instance of this service for the whole app)
@@ -81,23 +82,51 @@ class NotificationService {
     required int days,
   }) async {
     try {
+      // 1. Fetch the user's preferred time from storage
+      final prefs = await SharedPreferences.getInstance();
+      final int hour = prefs.getInt('reminderHour') ?? 9; // Default to 9 AM
+      final int minute = prefs.getInt('reminderMinute') ?? 0;
+
+      final now = tz.TZDateTime.now(tz.local);
+
+      // 2. Calculate the future day
+      var scheduledDate = now.add(Duration(days: days));
+
+      // 3. Use the USER'S SAVED TIME instead of hardcoded 9
+      scheduledDate = tz.TZDateTime(
+        tz.local,
+        scheduledDate.year,
+        scheduledDate.month,
+        scheduledDate.day,
+        hour,
+        minute,
+      );
+
+      // 4. Handle edge case: If the scheduled time is technically in the past
+      // (e.g., it's 10 AM and you scheduled for 8 AM today), move it to tomorrow
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
       await _notificationsPlugin.zonedSchedule(
         id: id,
         title: 'Thirsty Plant! 🌱',
         body: '$plantName needs some water today.',
-        // REVERTED: Now uses the actual days from the task
-        scheduledDate: tz.TZDateTime.now(tz.local).add(Duration(days: days)),
+        scheduledDate: scheduledDate,
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
-            'plant_reminders', // Cleaned up channel ID
+            'plant_reminders',
             'Plant Care Reminders',
             importance: Importance.max,
             priority: Priority.high,
           ),
           iOS: DarwinNotificationDetails(),
         ),
-        // REVERTED: Use Inexact to be battery-friendly and Play Store compliant
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+
+      print(
+        "SUCCESS: Scheduled for $hour:$minute on ${scheduledDate.day}/${scheduledDate.month}",
       );
     } catch (e) {
       print("ERROR: Could not schedule: $e");

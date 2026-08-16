@@ -25,10 +25,24 @@ class Task {
     this.positionY,
   });
 
-  // This check tells us if the time since last completed is greater than the frequency
+  // This check ignores the specific time and only cares about calendar dates
   bool get isThirsty {
-    final nextWateringDate = lastCompleted.add(Duration(days: frequencyInDays));
-    return DateTime.now().isAfter(nextWateringDate);
+    // 1. Get today's date at midnight (00:00:00)
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // 2. Get the date it was last completed at midnight
+    final lastDate = DateTime(
+      lastCompleted.year,
+      lastCompleted.month,
+      lastCompleted.day,
+    );
+
+    // 3. Calculate the difference in days
+    final daysSinceLast = today.difference(lastDate).inDays;
+
+    // It's "thirsty" if the days passed is greater or equal to frequency
+    return daysSinceLast >= frequencyInDays;
   }
 
   // Centralized emoji logic
@@ -70,8 +84,12 @@ class Task {
           : DateTime.now(), // If missing, just use "now"
       growthLevel: map['growthLevel'] ?? 0,
       totalCompletions: map['totalCompletions'] ?? 0,
-      positionX: map['positionX'] != null ? (map['positionX'] as num).toDouble() : null,
-      positionY: map['positionY'] != null ? (map['positionY'] as num).toDouble() : null,
+      positionX: map['positionX'] != null
+          ? (map['positionX'] as num).toDouble()
+          : null,
+      positionY: map['positionY'] != null
+          ? (map['positionY'] as num).toDouble()
+          : null,
     );
   }
 

@@ -13,11 +13,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   final TextEditingController _nameController = TextEditingController();
   int _currentPage = 0;
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
+
+  Future<void> _pickTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
 
   void _finishOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('seenOnboarding', true);
     await prefs.setString('userName', _nameController.text);
+
+    await prefs.setInt('reminderHour', _selectedTime.hour);
+    await prefs.setInt('reminderMinute', _selectedTime.minute);
 
     if (mounted) {
       Navigator.pushReplacementNamed(context, '/home');
@@ -90,7 +106,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
               // Page 3: Notifications
-              // Page 3: Notifications (THE UPDATED VERSION)
               Padding(
                 padding: const EdgeInsets.all(40.0),
                 child: Column(
@@ -141,6 +156,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.orange,
                         side: const BorderSide(color: Colors.orange),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20), // Add some space
+
+                    Text(
+                      "What time works best for you?",
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // The new Time Picker button
+                    ElevatedButton.icon(
+                      onPressed: _pickTime,
+                      icon: const Icon(Icons.access_time),
+                      label: Text(
+                        "Remind me at ${_selectedTime.format(context)}",
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.withOpacity(0.1),
+                        foregroundColor: Colors.orange,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

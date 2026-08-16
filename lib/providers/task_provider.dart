@@ -24,11 +24,7 @@ class TaskProvider extends ChangeNotifier {
 
   Future<void> loadTasks() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // Load the name we saved during onboarding
-    // If it's not there, we default to "Gardener"
     _userName = prefs.getString('userName') ?? "Gardener";
-
     final String? tasksString = prefs.getString('saved_tasks');
 
     if (tasksString != null) {
