@@ -4,7 +4,7 @@ import '../models/task.dart';
 class TaskList extends StatelessWidget {
   final List<Task> tasks;
   final double progress;
-  final Function(int) onDelete;    // Callback for deletion
+  final Function(int) onDelete; // Callback for deletion
   final Function(int, bool) onToggle; // Callback for checkmark
 
   const TaskList({
@@ -24,8 +24,12 @@ class TaskList extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primaryContainer.withValues(alpha: 0.3),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Theme.of(context).colorScheme.primary,
+            ),
             minHeight: 8,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -43,17 +47,20 @@ class TaskList extends StatelessWidget {
                 child: Dismissible(
                   key: Key(item.id),
                   direction: DismissDirection.endToStart,
-                  onDismissed: (direction) => onDelete(index), // Trigger callback
+                  onDismissed: (direction) =>
+                      onDelete(index), // Trigger callback
                   background: _buildDeleteBackground(context),
                   child: ListTile(
                     title: Text(
                       item.name,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        decoration: item.isDone ? TextDecoration.lineThrough : null,
+                        decoration: item.isDone
+                            ? TextDecoration.lineThrough
+                            : null,
                       ),
                     ),
-                    subtitle: Text("${item.category} • Every ${item.frequencyInDays} days"),
+                    subtitle: Text("Water every ${item.frequencyInDays} days"),
                     leading: _buildLeadingIcon(context, item, index),
                   ),
                 ),
@@ -72,10 +79,7 @@ class TaskList extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            item.emoji,
-            style: const TextStyle(fontSize: 18),
-          ),
+          Text(item.emoji, style: const TextStyle(fontSize: 18)),
           SizedBox(
             height: 24,
             child: Checkbox(

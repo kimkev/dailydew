@@ -22,84 +22,62 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showAddTaskDialog() {
     TextEditingController nameController = TextEditingController();
+    // Default frequency to 1 day
     TextEditingController freqController = TextEditingController(text: "1");
-    String selectedCategory = 'Plant';
 
-    // Get the provider once outside the dialog builder
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Add New Item'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(labelText: "Name"),
-                      autofocus: true,
-                    ),
-                    const SizedBox(height: 15),
-                    DropdownButton<String>(
-                      value: selectedCategory,
-                      isExpanded: true,
-                      items: <String>['Plant', 'Health', 'Home', 'General'].map(
-                        (String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        },
-                      ).toList(),
-                      onChanged: (newValue) {
-                        setDialogState(() {
-                          selectedCategory = newValue!;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 15),
-                    TextField(
-                      controller: freqController,
-                      decoration: const InputDecoration(
-                        labelText: "Repeat every (days)",
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ],
+        return AlertDialog(
+          title: const Text('Add New Plant'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: "Plant Name",
+                    hintText: "e.g. Monstera",
+                  ),
+                  autofocus: true,
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (nameController.text.isNotEmpty) {
-                      // --- CALL THE GLOBAL STORE ---
-                      taskProvider.addTask(
-                        Task(
-                          id: DateTime.now().toString(),
-                          name: nameController.text,
-                          category: selectedCategory,
-                          frequencyInDays:
-                              int.tryParse(freqController.text) ?? 1,
-                          lastCompleted: DateTime.now(),
-                        ),
-                      );
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text('Add'),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: freqController,
+                  decoration: const InputDecoration(
+                    labelText: "Water every (days)",
+                  ),
+                  keyboardType: TextInputType.number,
                 ),
               ],
-            );
-          },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty) {
+                  taskProvider.addTask(
+                    Task(
+                      id: DateTime.now().toString(),
+                      name: nameController.text,
+                      category: 'Plant', // Hardcoded as Plant
+                      frequencyInDays: int.tryParse(freqController.text) ?? 1,
+                      lastCompleted: DateTime.now(),
+                    ),
+                  );
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
         );
       },
     );

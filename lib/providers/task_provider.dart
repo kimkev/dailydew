@@ -110,4 +110,27 @@ class TaskProvider extends ChangeNotifier {
     // Tell all listening widgets (like HomeScreen) to rebuild
     notifyListeners();
   }
+
+  // Update position in real-time (smooth)
+  void moveTask(String id, double x, double y) {
+    final index = _tasks.indexWhere((t) => t.id == id);
+    if (index != -1) {
+      // 1. Clamp the values so plants stay inside the garden
+      double clampedX = x.clamp(0.0, 1.0);
+      double clampedY = y.clamp(0.0, 1.0);
+
+      // 2. ONLY update and notify if the position is actually different
+      if (_tasks[index].positionX != clampedX ||
+          _tasks[index].positionY != clampedY) {
+        _tasks[index].positionX = clampedX;
+        _tasks[index].positionY = clampedY;
+        notifyListeners(); // The "broadcast" to the UI
+      }
+    }
+  }
+
+  // Save the final position to disk (only called when finger lifts up)
+  void savePositions() {
+    _saveTasks();
+  }
 }
