@@ -119,8 +119,15 @@ class NotificationService {
             'Plant Care Reminders',
             importance: Importance.max,
             priority: Priority.high,
+            // --- ADD THESE TWO LINES FOR ANDROID ---
+            groupKey: 'com.kimkev.plant_tracker.WATER_GROUP',
+            setAsGroupSummary:
+                false, // Each plant is an individual item in the stack
           ),
-          iOS: DarwinNotificationDetails(),
+          iOS: DarwinNotificationDetails(
+            // --- ADD THIS LINE FOR iOS ---
+            threadIdentifier: 'plant_reminders_group',
+          ),
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
