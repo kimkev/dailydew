@@ -14,6 +14,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _nameController = TextEditingController();
   int _currentPage = 0;
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
+  bool _remindersEnabled = false;
 
   Future<void> _pickTime() async {
     final TimeOfDay? picked = await showTimePicker(
@@ -32,11 +33,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await prefs.setBool('seenOnboarding', true);
     await prefs.setString('userName', _nameController.text);
 
+    // Save the reminder time as well
     await prefs.setInt('reminderHour', _selectedTime.hour);
     await prefs.setInt('reminderMinute', _selectedTime.minute);
 
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
+      // THE NUCLEAR OPTION:
+      // This says: "Go to /home, and REMOVE every single screen that was there before."
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     }
   }
 
@@ -109,79 +113,123 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Padding(
                 padding: const EdgeInsets.all(40.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment:
+                      MainAxisAlignment.center, // Keeps it centered vertically
                   children: [
                     const Icon(
                       Icons.notifications_active_outlined,
                       size: 100,
                       color: Colors.orange,
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 30),
                     const Text(
                       "Stay Notified",
-                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
                     const Text(
                       "We'll send gentle reminders so your plants never go thirsty.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         color: Colors.grey,
-                        height: 1.5,
+                        height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 40),
 
-                    // --- THE PERMISSION BUTTON ---
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        // 1. Request official system permission
-                        await NotificationService().requestPermissions();
-
-                        // 2. Send a test notification to prove it works
-                        await NotificationService().showInstantNotification(
-                          id: 1, // Any unique number
-                          title: "Reminders Enabled! 🎉",
-                          body:
-                              "You'll now receive alerts when your plants are thirsty.",
-                        );
-                      },
-                      icon: const Icon(Icons.notifications_active),
-                      label: const Text("Enable Reminders"),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.orange,
-                        side: const BorderSide(color: Colors.orange),
-                        shape: RoundedRectangleBorder(
+                    // 1. WHAT TIME QUESTION FIRST
+                    const Text(
+                      "What time works best for you?",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: _pickTime,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.orange.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.access_time,
+                              color: Colors.orange,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              _selectedTime.format(context),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20), // Add some space
 
-                    Text(
-                      "What time works best for you?",
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 30),
 
-                    // The new Time Picker button
-                    ElevatedButton.icon(
-                      onPressed: _pickTime,
-                      icon: const Icon(Icons.access_time),
-                      label: Text(
-                        "Remind me at ${_selectedTime.format(context)}",
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange.withOpacity(0.1),
-                        foregroundColor: Colors.orange,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    // 2. ENHANCED ENABLE BUTTON
+                    SizedBox(
+                      width: double.infinity, // Makes it a nice wide button
+                      child: ElevatedButton.icon(
+                        onPressed: _remindersEnabled
+                            ? null // Disables the button if already enabled
+                            : () async {
+                                await NotificationService()
+                                    .requestPermissions();
+                                await NotificationService().showInstantNotification(
+                                  id: 1,
+                                  title: "Reminders Enabled! 🎉",
+                                  body:
+                                      "We'll remind you at ${_selectedTime.format(context)}",
+                                );
+                                setState(() {
+                                  _remindersEnabled = true;
+                                });
+                              },
+                        icon: Icon(
+                          _remindersEnabled
+                              ? Icons.check_circle
+                              : Icons.notifications_active,
+                        ),
+                        label: Text(
+                          _remindersEnabled
+                              ? "Reminders Ready!"
+                              : "Enable Reminders",
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _remindersEnabled
+                              ? Colors.green.shade100
+                              : Colors.orange,
+                          foregroundColor: _remindersEnabled
+                              ? Colors.green
+                              : Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
