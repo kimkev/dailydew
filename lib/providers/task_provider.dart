@@ -88,6 +88,25 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Action: Edit an existing plant
+  void editTask(String id, String newName, int newFrequency) {
+    final index = _tasks.indexWhere((t) => t.id == id);
+    if (index != -1) {
+      _tasks[index].name = newName;
+      _tasks[index].frequencyInDays = newFrequency;
+
+      // If we change the frequency, we should reschedule the notification
+      NotificationService().schedulePlantReminder(
+        id: _tasks[index].id.hashCode,
+        plantName: newName,
+        days: newFrequency,
+      );
+
+      _saveTasks();
+      notifyListeners();
+    }
+  }
+
   // garden position
   void updateTaskPosition(String id, double x, double y) {
     final index = _tasks.indexWhere((t) => t.id == id);

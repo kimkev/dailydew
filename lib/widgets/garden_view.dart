@@ -137,6 +137,30 @@ class GardenView extends StatelessWidget {
                     ),
                   );
                 }),
+                if (tasks.isEmpty)
+                  Positioned.fill(
+                    // This tells the Center to use the WHOLE garden space
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.yard_outlined,
+                            size: 60,
+                            color: Colors.brown.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "Plants you add will appear here!",
+                            style: TextStyle(
+                              color: Colors.brown.withValues(alpha: 0.5),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
