@@ -98,4 +98,16 @@ class TaskProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Update the user name and save to disk
+  Future<void> updateUserName(String newName) async {
+    _userName = newName;
+
+    // Save to SharedPreferences so it persists after restart
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', newName);
+
+    // Tell all listening widgets (like HomeScreen) to rebuild
+    notifyListeners();
+  }
 }
