@@ -19,8 +19,12 @@ class TaskList extends StatelessWidget {
 
   // --- Helper: Edit Dialog ---
   void _showEditPlantDialog(BuildContext context, Task plant) {
-    TextEditingController nameController = TextEditingController(text: plant.name);
-    TextEditingController freqController = TextEditingController(text: plant.frequencyInDays.toString());
+    TextEditingController nameController = TextEditingController(
+      text: plant.name,
+    );
+    TextEditingController freqController = TextEditingController(
+      text: plant.frequencyInDays.toString(),
+    );
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
     showDialog(
@@ -39,7 +43,9 @@ class TaskList extends StatelessWidget {
               const SizedBox(height: 20),
               TextField(
                 controller: freqController,
-                decoration: const InputDecoration(labelText: "Water every (days)"),
+                decoration: const InputDecoration(
+                  labelText: "Water every (days)",
+                ),
                 keyboardType: TextInputType.number,
               ),
             ],
@@ -71,14 +77,19 @@ class TaskList extends StatelessWidget {
   // --- Helper: Delete Confirmation ---
   void _showDeleteConfirmation(BuildContext context, Task item, int index) {
     final theme = Theme.of(context);
-    
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Remove Plant?"),
-        content: Text("Are you sure you want to remove ${item.name}? All growth progress will be lost."),
+        content: Text(
+          "Are you sure you want to remove ${item.name}? All growth progress will be lost.",
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               // Uses the standard 'Error' color defined in the theme
@@ -100,7 +111,7 @@ class TaskList extends StatelessWidget {
   // Added BuildContext here so we can access the theme
   Widget _buildLeadingIcon(BuildContext context, Task item) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -148,7 +159,9 @@ class TaskList extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+            backgroundColor: colorScheme.primaryContainer.withValues(
+              alpha: 0.3,
+            ),
             valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
             minHeight: 8,
             borderRadius: BorderRadius.circular(10),
@@ -166,14 +179,17 @@ class TaskList extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 12),
                 // Note: Background and shape are handled by CardTheme in main.dart
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       // 1. LEFT: Plant Identity
                       _buildLeadingIcon(context, item),
-                      
+
                       const SizedBox(width: 16),
-                      
+
                       // 2. MIDDLE: Info
                       Expanded(
                         child: Column(
@@ -185,15 +201,22 @@ class TaskList extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                decoration: item.isDone ? TextDecoration.lineThrough : null,
+                                decoration: item.isDone
+                                    ? TextDecoration.lineThrough
+                                    : null,
                                 // Uses theme colors instead of black/grey
-                                color: item.isDone ? theme.disabledColor : colorScheme.onSurface,
+                                color: item.isDone
+                                    ? theme.disabledColor
+                                    : colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               "Water every ${item.frequencyInDays} days",
-                              style: TextStyle(fontSize: 13, color: theme.hintColor),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: theme.hintColor,
+                              ),
                             ),
                           ],
                         ),
@@ -205,44 +228,64 @@ class TaskList extends StatelessWidget {
                         children: [
                           // WATERING BUTTON
                           GestureDetector(
-                            onTap: item.isDone ? null : () {
-                              onToggle(index, true);
-                              ScaffoldMessenger.of(context).clearSnackBars();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Watered ${item.name}! 🌱"),
-                                  action: SnackBarAction(
-                                    label: "UNDO",
-                                    onPressed: () {
-                                      final p = Provider.of<TaskProvider>(context, listen: false);
-                                      p.undoWatering(item.id);
-                                    },
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: item.isDone
+                                ? null
+                                : () {
+                                    onToggle(index, true);
+                                    ScaffoldMessenger.of(
+                                      context,
+                                    ).clearSnackBars();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          "Watered ${item.name}! 🌱",
+                                        ),
+                                        action: SnackBarAction(
+                                          label: "UNDO",
+                                          onPressed: () {
+                                            final p = Provider.of<TaskProvider>(
+                                              context,
+                                              listen: false,
+                                            );
+                                            p.undoWatering(item.id);
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                // SWITCH: Primary for "Thirsty", Secondary for "Done"
-                                color: item.isDone 
-                                    ? colorScheme.secondaryContainer 
-                                    : colorScheme.primaryContainer,
+                                // 1. Thirsty = Blue (Secondary), Watered = Green (Tertiary/Success)
+                                color: item.isDone
+                                    ? colorScheme
+                                          .tertiaryContainer // This will be a light green (Success)
+                                    : colorScheme
+                                          .secondaryContainer, // This is now our Light Blue
                                 borderRadius: BorderRadius.circular(16),
-                                boxShadow: item.isDone ? [] : [
-                                  BoxShadow(
-                                    color: colorScheme.primary.withValues(alpha: 0.2),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  )
-                                ],
+                                boxShadow: item.isDone
+                                    ? []
+                                    : [
+                                        BoxShadow(
+                                          color: colorScheme.secondary
+                                              .withValues(
+                                                alpha: 0.2,
+                                              ), // Blue shadow
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
                               ),
                               child: Icon(
-                                item.isDone ? Icons.check_circle : Icons.water_drop,
-                                color: item.isDone 
-                                    ? colorScheme.onSecondaryContainer 
-                                    : colorScheme.onPrimaryContainer,
+                                item.isDone
+                                    ? Icons.check_circle
+                                    : Icons.water_drop,
+                                color: item.isDone
+                                    ? colorScheme
+                                          .onTertiaryContainer // Dark Green icon
+                                    : colorScheme
+                                          .onSecondaryContainer, // Dark Blue icon
                                 size: 32,
                               ),
                             ),
@@ -252,14 +295,22 @@ class TaskList extends StatelessWidget {
                           PopupMenuButton<String>(
                             icon: Icon(Icons.more_vert, color: theme.hintColor),
                             onSelected: (val) {
-                              if (val == 'edit') _showEditPlantDialog(context, item);
-                              if (val == 'delete') _showDeleteConfirmation(context, item, index);
+                              if (val == 'edit')
+                                _showEditPlantDialog(context, item);
+                              if (val == 'delete')
+                                _showDeleteConfirmation(context, item, index);
                             },
                             itemBuilder: (ctx) => [
-                              const PopupMenuItem(value: 'edit', child: Text("Edit Plant")),
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Text("Edit Plant"),
+                              ),
                               PopupMenuItem(
-                                value: 'delete', 
-                                child: Text("Remove", style: TextStyle(color: colorScheme.error))
+                                value: 'delete',
+                                child: Text(
+                                  "Remove",
+                                  style: TextStyle(color: colorScheme.error),
+                                ),
                               ),
                             ],
                           ),

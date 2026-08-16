@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_first_app/providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/task_provider.dart';
 import 'package:provider/provider.dart';
@@ -99,13 +100,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showThemeDialog() {
+    // We talk to the ThemeProvider specifically
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Select App Theme"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.settings_suggest),
+              title: const Text("System Default"),
+              onTap: () {
+                themeProvider.updateTheme(ThemeMode.system);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.light_mode),
+              title: const Text("Light Mode"),
+              onTap: () {
+                themeProvider.updateTheme(ThemeMode.light);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.dark_mode),
+              title: const Text("Dark Mode"),
+              onTap: () {
+                themeProvider.updateTheme(ThemeMode.dark);
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white, // Ensures back arrow is visible
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
       ),
       body: ListView(
         children: [
@@ -129,15 +174,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const Divider(),
 
-          // 3. Your existing Theme Row
+          // 3. Theme Row
           ListTile(
-            leading: const Icon(Icons.palette),
-            title: const Text('Theme'),
-            subtitle: const Text('Light / Dark Mode'),
-            onTap: () => print('Theme tapped'),
+            leading: const Icon(Icons.palette_outlined),
+            title: const Text('App Theme'),
+            subtitle: Text(
+              "Current: ${themeProvider.themeMode.name.toUpperCase()}",
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _showThemeDialog,
           ),
 
-          // 4. Your existing Reset Row
+          // 4.  Reset Row - temp for testing
           ListTile(
             leading: const Icon(Icons.restore),
             title: const Text('Reset App Data'),
@@ -145,13 +193,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Data Cleared! Restart the app.'),
-                  ),
-                );
-              }
+              if (!context.mounted) return;
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Data Cleared! Restart the app.')),
+              );
             },
           ),
 

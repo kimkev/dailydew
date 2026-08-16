@@ -11,6 +11,10 @@ class GardenView extends StatelessWidget {
     final taskProvider = Provider.of<TaskProvider>(context);
     final tasks = taskProvider.tasks;
 
+    // Grab the global theme
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         double padding = 20.0;
@@ -18,21 +22,20 @@ class GardenView extends StatelessWidget {
         double availableHeight = constraints.maxHeight - (padding * 2);
 
         return Container(
-          color: const Color(0xFFF1F8E9), // Light background
+          color: theme.scaffoldBackgroundColor, // Uses the theme's background
           padding: EdgeInsets.all(padding),
           child: Container(
             decoration: BoxDecoration(
-              // 1. IMPROVED GRASS (Gradient)
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFDCEDC8), Color(0xFFAED581)],
+                colors: [colorScheme.tertiary, colorScheme.onTertiary],
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.brown.shade400, width: 6),
+              border: Border.all(color: colorScheme.outlineVariant, width: 6),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: theme.shadowColor.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(4, 4),
                 ),
@@ -41,10 +44,7 @@ class GardenView extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // 2. ADD SOME DECOR (Static background details)
                 ..._buildBackgroundDecor(),
-
-                // 3. THE PLANTS
                 ...tasks.map((plant) {
                   double x = plant.positionX ?? 0.5;
                   double y = plant.positionY ?? 0.5;
@@ -54,34 +54,22 @@ class GardenView extends StatelessWidget {
                     left: x * availableWidth - 40,
                     top: y * availableHeight - 40,
                     child: GestureDetector(
-                      // 1. Detect the start of a drag + light vibration
                       onPanStart: (_) {
                         taskProvider.selectTask(plant.id);
-                        // This gives a tiny "click" vibration when you touch the plant
                         HapticFeedback.lightImpact();
                       },
-                      // 2. While dragging, update position based on finger movement
                       onPanUpdate: (details) {
-                        // 1. Get the "RenderBox" of the garden (the parent container)
-                        // This allows us to know exactly where the garden is on the screen
                         final RenderBox box =
                             context.findRenderObject() as RenderBox;
-
-                        // 2. Convert the global finger position to a position inside the garden
                         final Offset localOffset = box.globalToLocal(
                           details.globalPosition,
                         );
-
-                        // 3. Convert that pixel position into a percentage (0.0 to 1.0)
-                        // We subtract the 20px padding we added to the garden
-                        double newX = (localOffset.dx - 20) / availableWidth;
-                        double newY = (localOffset.dy - 20) / availableHeight;
-
-                        // 4. Update the provider
-                        taskProvider.moveTask(plant.id, newX, newY);
+                        taskProvider.moveTask(
+                          plant.id,
+                          (localOffset.dx - 20) / availableWidth,
+                          (localOffset.dy - 20) / availableHeight,
+                        );
                       },
-
-                      // 3. When finger lifts up, save to disk and deselect
                       onPanEnd: (_) {
                         taskProvider.savePositions();
                         taskProvider.selectTask(null);
@@ -89,16 +77,14 @@ class GardenView extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // 4. THE DIRT / SELECTION GLOW
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
+                              // THE DIRT SLOT
                               color: isSelected
                                   ? Colors.white.withValues(alpha: 0.5)
-                                  : Colors.brown.withValues(
-                                      alpha: 0.1,
-                                    ), // Subtle dirt spot
+                                  : colorScheme.scrim,
                               shape: BoxShape.circle,
                               border: isSelected
                                   ? Border.all(color: Colors.white, width: 2)
@@ -106,13 +92,12 @@ class GardenView extends StatelessWidget {
                             ),
                             child: Text(
                               plant.emoji,
-                              // 5. SCALING LOGIC
                               style: TextStyle(
                                 fontSize: 40 + (plant.growthLevel * 0.5),
                               ),
                             ),
                           ),
-                          // 6. BETTER NAME TAG
+                          // THE TAG SLOTS
                           Container(
                             margin: const EdgeInsets.only(top: 2),
                             padding: const EdgeInsets.symmetric(
@@ -120,15 +105,15 @@ class GardenView extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.8),
+                              color: colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               plant.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.brown,
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -139,7 +124,6 @@ class GardenView extends StatelessWidget {
                 }),
                 if (tasks.isEmpty)
                   Positioned.fill(
-                    // This tells the Center to use the WHOLE garden space
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -147,13 +131,15 @@ class GardenView extends StatelessWidget {
                           Icon(
                             Icons.yard_outlined,
                             size: 60,
-                            color: Colors.brown.withValues(alpha: 0.3),
+                            color: colorScheme.onSurface.withValues(alpha: 0.2),
                           ),
                           const SizedBox(height: 10),
                           Text(
                             "Plants you add will appear here!",
                             style: TextStyle(
-                              color: Colors.brown.withValues(alpha: 0.5),
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -175,7 +161,7 @@ class GardenView extends StatelessWidget {
         top: 20,
         left: 30,
         child: Opacity(
-          opacity: 0.5,
+          opacity: 0.3,
           child: const Text("🌼", style: TextStyle(fontSize: 12)),
         ),
       ),
@@ -183,7 +169,7 @@ class GardenView extends StatelessWidget {
         bottom: 40,
         right: 50,
         child: Opacity(
-          opacity: 0.4,
+          opacity: 0.2,
           child: const Text("🍀", style: TextStyle(fontSize: 14)),
         ),
       ),
@@ -191,7 +177,7 @@ class GardenView extends StatelessWidget {
         top: 100,
         right: 30,
         child: Opacity(
-          opacity: 0.3,
+          opacity: 0.2,
           child: const Text("🌸", style: TextStyle(fontSize: 10)),
         ),
       ),
