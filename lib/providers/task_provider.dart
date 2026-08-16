@@ -134,10 +134,13 @@ class TaskProvider extends ChangeNotifier {
   void moveTask(String id, double x, double y) {
     final index = _tasks.indexWhere((t) => t.id == id);
     if (index != -1) {
-      // 1. Clamp the values so plants stay inside the garden
-      double clampedX = x.clamp(0.0, 1.0);
-      double clampedY = y.clamp(0.0, 1.0);
-
+      // 1. Horizontal Clamping (0.05 is ~5% from the fence)
+      double clampedX = x.clamp(0.05, 0.95);
+      // 2. Vertical Clamping
+      // 0.03 (Top) allows the plant to sit much closer to the top fence
+      // 0.92 (Bottom) leaves a tiny bit of extra room for the name label
+      double clampedY = y.clamp(0.03, 0.92);
+      
       // 2. ONLY update and notify if the position is actually different
       if (_tasks[index].positionX != clampedX ||
           _tasks[index].positionY != clampedY) {

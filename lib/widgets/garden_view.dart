@@ -64,11 +64,13 @@ class GardenView extends StatelessWidget {
                         final Offset localOffset = box.globalToLocal(
                           details.globalPosition,
                         );
-                        taskProvider.moveTask(
-                          plant.id,
-                          (localOffset.dx - 20) / availableWidth,
-                          (localOffset.dy - 20) / availableHeight,
-                        );
+
+                        // We use the same availableWidth/Height from your LayoutBuilder
+                        // This ensures the percentage is calculated correctly relative to the grass
+                        double newX = (localOffset.dx - 20) / availableWidth;
+                        double newY = (localOffset.dy - 20) / availableHeight;
+
+                        taskProvider.moveTask(plant.id, newX, newY);
                       },
                       onPanEnd: (_) {
                         taskProvider.savePositions();

@@ -234,14 +234,37 @@ class TaskList extends StatelessWidget {
                                     onToggle(index, true);
                                     ScaffoldMessenger.of(
                                       context,
-                                    ).clearSnackBars();
+                                    ).hideCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
                                           "Watered ${item.name}! 🌱",
+                                          style: TextStyle(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                         ),
+                                        duration: const Duration(seconds: 3),
+                                        behavior: SnackBarBehavior
+                                            .floating, // Makes it hover instead of sticking to bottom
+                                        // This allows the user to flick it off the screen to the left or right
+                                        dismissDirection:
+                                            DismissDirection.horizontal,
+
+                                        margin: const EdgeInsets.only(
+                                          bottom: 90,
+                                          left: 20,
+                                          right: 20,
+                                        ),
+
+                                        backgroundColor: theme
+                                            .colorScheme
+                                            .surfaceContainerHighest,
+
                                         action: SnackBarAction(
                                           label: "UNDO",
+                                          textColor: theme.colorScheme.primary,
                                           onPressed: () {
                                             final p = Provider.of<TaskProvider>(
                                               context,

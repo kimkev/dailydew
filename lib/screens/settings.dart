@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:my_first_app/providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../providers/task_provider.dart';
 import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
+import '../providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -21,7 +21,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSettings();
   }
 
-  // Load the current values from SharedPreferences
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -32,82 +31,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
-  // The function to pick and save a new time
-  Future<void> _editTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _reminderTime,
-    );
-
-    if (picked != null && picked != _reminderTime) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('reminderHour', picked.hour);
-      await prefs.setInt('reminderMinute', picked.minute);
-
-      setState(() {
-        _reminderTime = picked;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Reminder time updated!")));
-      }
-    }
-  }
-
-  Future<void> _editName() async {
-    TextEditingController nameController = TextEditingController(
-      text: _userName,
-    );
-
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Edit Name"),
-        content: TextField(
-          controller: nameController,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: "Enter your name"),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              String newName = nameController.text.trim();
-              if (newName.isNotEmpty) {
-                // 1. Update the Global Provider (this handles saving to disk AND notifying Home)
-                Provider.of<TaskProvider>(
-                  context,
-                  listen: false,
-                ).updateUserName(newName);
-
-                // 2. Update local state so the settings screen updates immediately
-                setState(() {
-                  _userName = newName;
-                });
-
-                if (mounted) Navigator.pop(context);
-              }
-            },
-            child: const Text("Save"),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // --- THEME DIALOG ---
   void _showThemeDialog() {
-    // We talk to the ThemeProvider specifically
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Select App Theme"),
+        title: const Text("App Theme"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -141,73 +72,149 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // --- EDIT NAME DIALOG ---
+  Future<void> _editName() async {
+    final theme = Theme.of(context);
+    TextEditingController nameController = TextEditingController(text: _userName);
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Edit Name"),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: "Enter your name"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+            ),
+            onPressed: () async {
+              String newName = nameController.text.trim();
+              if (newName.isNotEmpty) {
+                Provider.of<TaskProvider>(context, listen: false).updateUserName(newName);
+                setState(() => _userName = newName);
+                if (mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- EDIT TIME PICKER ---
+  Future<void> _editTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _reminderTime,
+    );
+
+    if (picked != null && picked != _reminderTime) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('reminderHour', picked.hour);
+      await prefs.setInt('reminderMinute', picked.minute);
+
+      setState(() => _reminderTime = picked);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Reminder time updated!")),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.onSurface,
+        // Automatically uses AppBarTheme from main.dart
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        foregroundColor: theme.appBarTheme.titleTextStyle?.color,
       ),
       body: ListView(
         children: [
-          // 1. User Name Row
+          // 1. User Name
           ListTile(
-            leading: const Icon(Icons.person),
+            leading: Icon(Icons.person_outline, color: colorScheme.primary),
             title: const Text("User Name"),
-            subtitle: Text(_userName),
-            trailing: const Icon(Icons.edit, size: 20),
+            subtitle: Text(_userName, style: TextStyle(color: theme.hintColor)),
+            trailing: Icon(Icons.edit, size: 18, color: theme.hintColor),
             onTap: _editName,
           ),
 
-          // 2. notification Time Row
+          // 2. Notification Time
           ListTile(
-            leading: const Icon(Icons.notifications),
+            leading: Icon(Icons.notifications_outlined, color: colorScheme.primary),
             title: const Text('Daily Reminder Time'),
-            subtitle: Text('Reminders at ${_reminderTime.format(context)}'),
-            trailing: const Icon(Icons.edit, size: 20),
+            subtitle: Text(
+              'Reminders at ${_reminderTime.format(context)}',
+              style: TextStyle(color: theme.hintColor),
+            ),
+            trailing: Icon(Icons.edit, size: 18, color: theme.hintColor),
             onTap: _editTime,
           ),
 
           const Divider(),
 
-          // 3. Theme Row
+          // 3. App Theme
           ListTile(
-            leading: const Icon(Icons.palette_outlined),
+            leading: Icon(Icons.palette_outlined, color: colorScheme.primary),
             title: const Text('App Theme'),
             subtitle: Text(
               "Current: ${themeProvider.themeMode.name.toUpperCase()}",
+              style: TextStyle(color: theme.hintColor),
             ),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: Icon(Icons.chevron_right, color: theme.hintColor),
             onTap: _showThemeDialog,
           ),
 
-          // 4.  Reset Row - temp for testing
+          // 4. Reset App Data
           ListTile(
-            leading: const Icon(Icons.restore),
+            leading: Icon(Icons.restore, color: colorScheme.error),
             title: const Text('Reset App Data'),
-            subtitle: const Text('Wipes tasks and onboarding status'),
+            subtitle: Text(
+              'Wipes tasks and onboarding status',
+              style: TextStyle(color: theme.hintColor),
+            ),
             onTap: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
+              
               if (!context.mounted) return;
 
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Data Cleared! Restart the app.')),
+                SnackBar(
+                  content: const Text('Data Cleared! Please restart the app.'),
+                  backgroundColor: colorScheme.errorContainer,
+                  behavior: SnackBarBehavior.floating,
+                ),
               );
             },
           ),
 
           const Divider(),
 
-          // 5. Your existing Pro Row
+          // 5. Upgrade to Pro
           ListTile(
-            leading: const Icon(Icons.star, color: Colors.orange),
+            leading: const Icon(Icons.star, color: Colors.orange), // Kept as brand color
             title: const Text('Upgrade to Pro'),
-            subtitle: const Text('Unlock all features'),
+            subtitle: Text('Unlock all features', style: TextStyle(color: theme.hintColor)),
             onTap: () => print('Pro tapped'),
           ),
         ],

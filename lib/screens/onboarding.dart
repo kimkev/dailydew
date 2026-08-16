@@ -32,29 +32,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('seenOnboarding', true);
     await prefs.setString('userName', _nameController.text);
-
-    // Save the reminder time as well
     await prefs.setInt('reminderHour', _selectedTime.hour);
     await prefs.setInt('reminderMinute', _selectedTime.minute);
 
     if (mounted) {
-      // THE NUCLEAR OPTION:
-      // This says: "Go to /home, and REMOVE every single screen that was there before."
       Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     }
   }
 
-  // Clean up the controller when the screen is destroyed
   @override
   void dispose() {
     _nameController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           PageView(
@@ -65,41 +64,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             children: [
               // Page 1: Intro
               _buildPage(
+                context: context,
                 icon: Icons.psychology_alt,
                 title: "Master Your Routine",
                 description:
                     "Science shows that tracking habits helps you stick to them.",
-                color: Colors.green,
+                iconColor: colorScheme.primary,
               ),
-              // Page 2: NAME INPUT (This is the new part)
+
+              // Page 2: Name Input
               Padding(
                 padding: const EdgeInsets.all(40.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.badge_outlined,
                       size: 100,
-                      color: Colors.lightGreen,
+                      color: colorScheme.primary,
                     ),
                     const SizedBox(height: 40),
-                    const Text(
+                    Text(
                       "What's your name?",
-                      style: TextStyle(
-                        fontSize: 26,
+                      style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 20),
                     TextField(
-                      controller:
-                          _nameController, // This links to your variable above
+                      controller: _nameController,
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 20),
                       decoration: InputDecoration(
                         hintText: "Enter your name",
                         filled: true,
-                        fillColor: Colors.grey.shade100,
+                        fillColor: colorScheme.surfaceContainerHighest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: BorderSide.none,
@@ -109,47 +108,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ],
                 ),
               ),
+
               // Page 3: Notifications
               Padding(
                 padding: const EdgeInsets.all(40.0),
                 child: Column(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center, // Keeps it centered vertically
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.notifications_active_outlined,
                       size: 100,
-                      color: Colors.orange,
+                      color: colorScheme
+                          .secondary, // Matches the blue water drop theme
                     ),
                     const SizedBox(height: 30),
-                    const Text(
+                    Text(
                       "Stay Notified",
-                      style: TextStyle(
-                        fontSize: 26,
+                      style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 15),
-                    const Text(
+                    Text(
                       "We'll send gentle reminders so your plants never go thirsty.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
-                        color: Colors.grey,
+                        color: theme.hintColor,
                         height: 1.4,
                       ),
                     ),
                     const SizedBox(height: 40),
 
-                    // 1. WHAT TIME QUESTION FIRST
                     const Text(
                       "What time works best for you?",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 12),
+
+                    // Time Picker Box
                     InkWell(
                       onTap: _pickTime,
                       borderRadius: BorderRadius.circular(12),
@@ -159,27 +156,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
+                          color: colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.orange.withOpacity(0.3),
-                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.access_time,
-                              color: Colors.orange,
+                              color: colorScheme.onSecondaryContainer,
                               size: 20,
                             ),
                             const SizedBox(width: 10),
                             Text(
                               _selectedTime.format(context),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.orange,
+                                color: colorScheme.onSecondaryContainer,
                               ),
                             ),
                           ],
@@ -189,12 +183,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                     const SizedBox(height: 30),
 
-                    // 2. ENHANCED ENABLE BUTTON
+                    // Enable Button
                     SizedBox(
-                      width: double.infinity, // Makes it a nice wide button
+                      width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: _remindersEnabled
-                            ? null // Disables the button if already enabled
+                            ? null
                             : () async {
                                 await NotificationService()
                                     .requestPermissions();
@@ -204,9 +198,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   body:
                                       "We'll remind you at ${_selectedTime.format(context)}",
                                 );
-                                setState(() {
-                                  _remindersEnabled = true;
-                                });
+                                setState(() => _remindersEnabled = true);
                               },
                         icon: Icon(
                           _remindersEnabled
@@ -220,11 +212,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _remindersEnabled
-                              ? Colors.green.shade100
-                              : Colors.orange,
+                              ? colorScheme.tertiaryContainer
+                              : colorScheme.secondary,
                           foregroundColor: _remindersEnabled
-                              ? Colors.green
-                              : Colors.white,
+                              ? colorScheme.onTertiaryContainer
+                              : colorScheme.onSecondary,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -239,46 +231,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
 
-          // Bottom Navigation Area
+          // Bottom Navigation
           Positioned(
             bottom: 50,
             left: 30,
             right: 30,
             child: Column(
               children: [
-                // Page Indicators (Dots)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(3, (index) => _buildDot(index)),
+                  children: List.generate(
+                    3,
+                    (index) => _buildDot(index, colorScheme),
+                  ),
                 ),
                 const SizedBox(height: 30),
-
-                // Button
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 55),
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
                   onPressed: () {
-                    // --- NEW VALIDATION CHECK ---
-                    // If we are on the Name Page (index 1) and the text is empty...
                     if (_currentPage == 1 &&
                         _nameController.text.trim().isEmpty) {
-                      // Show a little warning message
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please enter your name to continue!'),
-                          duration: Duration(seconds: 2),
                         ),
                       );
-                      return; // This "return" stops the function so we don't go to the next page
+                      return;
                     }
-
-                    // --- EXISTING NAVIGATION LOGIC ---
                     if (_currentPage < 2) {
                       _pageController.nextPage(
                         duration: const Duration(milliseconds: 300),
@@ -299,45 +285,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildPage({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String description,
-    required Color color,
+    required Color iconColor,
   }) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(40.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 120, color: color),
+          Icon(icon, size: 120, color: iconColor),
           const SizedBox(height: 40),
           Text(
             title,
-            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 16, color: theme.hintColor, height: 1.5),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDot(int index) {
+  Widget _buildDot(int index, ColorScheme colorScheme) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.only(right: 8),
       height: 8,
       width: _currentPage == index ? 24 : 8,
       decoration: BoxDecoration(
-        color: _currentPage == index ? Colors.green : Colors.grey.shade300,
+        color: _currentPage == index
+            ? colorScheme.primary
+            : colorScheme.outlineVariant.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(4),
       ),
     );
