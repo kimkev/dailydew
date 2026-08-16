@@ -152,4 +152,18 @@ class TaskProvider extends ChangeNotifier {
   void savePositions() {
     _saveTasks();
   }
+
+  void undoWatering(String id) {
+    final index = _tasks.indexWhere((t) => t.id == id);
+    if (index != -1) {
+      _tasks[index].isDone = false;
+      _tasks[index].growthLevel -= 5; // Revert growth
+      _tasks[index].totalCompletions -= 1;
+      // Note: We don't necessarily need to revert lastCompleted
+      // because isDone = false will make it 'Thirsty' again.
+
+      _saveTasks();
+      notifyListeners();
+    }
+  }
 }
