@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
 
@@ -188,10 +190,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: colorScheme.primary,
             ),
             title: const Text("Enable Reminders"),
-            subtitle: Text(
-              "Daily at ${_reminderTime.format(context)}",
-              style: TextStyle(color: theme.hintColor),
-            ),
             value: _notificationsEnabled,
             onChanged: _toggleNotifications,
           ),
@@ -200,11 +198,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: Icon(Icons.access_time, color: colorScheme.primary),
             title: const Text('Reminder Time'),
+            subtitle: Text(
+              'Daily at ${_reminderTime.format(context)}',
+              style: TextStyle(color: theme.hintColor),
+            ),
             trailing: Icon(Icons.chevron_right, color: theme.hintColor),
             onTap: _editTime,
           ),
-
-          const Divider(),
 
           // 3. App Theme
           ListTile(
@@ -233,6 +233,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             onTap: null, // Disabled until Pro features are implemented
           ),
+          const Divider(height: 1),
+
+          const Divider(height: 1),
+
+          // === ABOUT SECTION ===
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Text(
+              "ABOUT",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 0,
+            ),
+            leading: const Icon(Icons.info_outline, size: 20),
+            title: const Text('Version 1.0.0', style: TextStyle(fontSize: 14)),
+            visualDensity: VisualDensity.compact,
+          ),
+
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 0,
+            ),
+            leading: const Icon(Icons.person_outline, size: 20),
+            title: const Text(
+              'Developed by Kevin Kim',
+              style: TextStyle(fontSize: 14),
+            ),
+            visualDensity: VisualDensity.compact,
+          ),
+
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 0,
+            ),
+            leading: const Icon(Icons.description_outlined, size: 20),
+            title: const Text('Privacy Policy', style: TextStyle(fontSize: 14)),
+            trailing: const Icon(Icons.open_in_new, size: 16),
+            visualDensity: VisualDensity.compact,
+            onTap: () async {
+              final url = Uri.parse(
+                'https://kimkev.github.io/privacypolicies/privacy-plantpal.html',
+              );
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+          ),
+
+          const SizedBox(height: 16),
         ],
       ),
     );
