@@ -1,10 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/task_provider.dart';
 import 'package:flutter/services.dart';
+
+import '../models/task.dart';
+import '../providers/task_provider.dart';
 
 class GardenView extends StatelessWidget {
   const GardenView({super.key});
+
+  String _getGrowthEmoji(Task plant) {
+    final level = plant.growthLevel;
+
+    if (level < 25) {
+      return '🫘';
+    }
+    if (level < 50) {
+      return '🌱';
+    }
+    if (level < 75) {
+      return '🌿';
+    }
+    if (level < 100) {
+      return '🪴';
+    }
+
+    return plant.emoji;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +114,7 @@ class GardenView extends StatelessWidget {
                                   : null,
                             ),
                             child: Text(
-                              plant.emoji,
+                              _getGrowthEmoji(plant),
                               style: TextStyle(
                                 fontSize: 40 + (plant.growthLevel * 0.5),
                               ),

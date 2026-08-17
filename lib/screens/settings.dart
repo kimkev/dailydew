@@ -192,33 +192,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: _showThemeDialog,
           ),
 
-          // 4. Reset App Data
-          ListTile(
-            leading: Icon(Icons.restore, color: colorScheme.error),
-            title: const Text('Reset App Data'),
-            subtitle: Text(
-              'Wipes tasks and onboarding status',
-              style: TextStyle(color: theme.hintColor),
-            ),
-            onTap: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
-
-              if (!context.mounted) return;
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Data Cleared! Please restart the app.'),
-                  backgroundColor: colorScheme.errorContainer,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
-
           const Divider(),
 
-          // 5. Upgrade to Pro
+          // 4. Upgrade to Pro
           ListTile(
             leading: const Icon(
               Icons.star,
@@ -229,9 +205,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Coming soon',
               style: TextStyle(color: theme.hintColor),
             ),
-            onTap: () {
-              // TODO: Implement Pro features
-            },
+            onTap: null, // Disabled until Pro features are implemented
           ),
         ],
       ),

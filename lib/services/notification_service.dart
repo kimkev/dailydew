@@ -46,26 +46,26 @@ class NotificationService {
     await _notificationsPlugin.initialize(settings: initSettings);
   }
 
-  Future<void> requestPermissions() async {
-    // 1. Android logic
+  Future<bool> requestPermissions() async {
     if (Platform.isAndroid) {
       final androidPlugin = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >();
-      await androidPlugin?.requestNotificationsPermission();
+
+      return await androidPlugin?.requestNotificationsPermission() ?? false;
     }
 
-    // 2. iOS/MacOS logic (THE SAFE WAY)
-    // Instead of naming the Plugin type, we use the universal "requestPermissions"
-    // from the main plugin if we are on a Darwin platform.
     if (Platform.isIOS || Platform.isMacOS) {
-      await _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin
-          >()
-          ?.requestPermissions(alert: true, badge: true, sound: true);
+      return await _notificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin
+              >()
+              ?.requestPermissions(alert: true, badge: true, sound: true) ??
+          false;
     }
+
+    return false;
   }
 
   Future<void> schedulePlantReminder({

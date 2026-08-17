@@ -4,7 +4,7 @@ class Task {
   final String id;
   String name;
   bool isDone;
-  String category; // e.g., "Plant", "Health", "Home"
+  String category; // Plant type: Flower, Houseplant, Cactus, or Tree
   int frequencyInDays; // e.g., 1 for daily, 7 for weekly
   DateTime lastCompleted;
   int growthLevel;
@@ -45,13 +45,73 @@ class Task {
     return daysSinceLast >= frequencyInDays;
   }
 
-  // Centralized emoji logic
+  int get growthStage => (growthLevel.clamp(0, 99) ~/ 10);
+
   String get emoji {
-    if (growthLevel < 20) return '🌱';
-    if (growthLevel < 40) return '🪴';
-    if (growthLevel < 60) return '🌿';
-    if (growthLevel < 80) return '☘️';
-    return '🌸';
+    const flowerStages = [
+      '🌰',
+      '🌱',
+      '🌱',
+      '🌿',
+      '☘️',
+      '🌷',
+      '🌷',
+      '🌸',
+      '🌼',
+      '🌻',
+    ];
+
+    const houseplantStages = [
+      '🌰',
+      '🌱',
+      '🌱',
+      '🌿',
+      '🍀',
+      '🍀',
+      '🪴',
+      '🪴',
+      '🪴',
+      '🌴',
+    ];
+
+    const cactusStages = [
+      '🌰',
+      '🌱',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
+    ];
+
+    const treeStages = [
+      '🌰',
+      '🌱',
+      '🌱',
+      '🌿',
+      '🌿',
+      '🌲',
+      '🌲',
+      '🌲',
+      '🌳',
+      '🌳',
+    ];
+
+    switch (category.toLowerCase()) {
+      case 'cactus':
+        return cactusStages[growthStage];
+      case 'tree':
+        return treeStages[growthStage];
+      case 'houseplant':
+      case 'foliage':
+        return houseplantStages[growthStage];
+      case 'flower':
+      default:
+        return flowerStages[growthStage];
+    }
   }
 
   // Convert to Map

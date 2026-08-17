@@ -21,63 +21,102 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   void _showAddTaskDialog() {
-    TextEditingController nameController = TextEditingController();
-    // Default frequency to 1 day
-    TextEditingController freqController = TextEditingController(text: "1");
+    final nameController = TextEditingController();
+    final freqController = TextEditingController(text: '1');
+    String selectedPlantType = 'Flower';
 
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add New Plant'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: "Plant Name",
-                    hintText: "e.g. Monstera",
-                  ),
-                  autofocus: true,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Add New Plant'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Plant Name',
+                        hintText: 'e.g. Monstera',
+                      ),
+                      autofocus: true,
+                    ),
+                    const SizedBox(height: 20),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedPlantType,
+                      decoration: const InputDecoration(
+                        labelText: 'Plant Type',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Flower',
+                          child: Text('Flower 🌸'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Houseplant',
+                          child: Text('Houseplant 🪴'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Cactus',
+                          child: Text('Cactus 🌵'),
+                        ),
+                        DropdownMenuItem(value: 'Tree', child: Text('Tree 🌳')),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+
+                        setDialogState(() {
+                          selectedPlantType = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: freqController,
+                      decoration: const InputDecoration(
+                        labelText: 'Water every (days)',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: freqController,
-                  decoration: const InputDecoration(
-                    labelText: "Water every (days)",
-                  ),
-                  keyboardType: TextInputType.number,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final name = nameController.text.trim();
+                    final frequency = int.tryParse(freqController.text) ?? 1;
+
+                    if (name.isEmpty) {
+                      return;
+                    }
+
+                    taskProvider.addTask(
+                      Task(
+                        id: DateTime.now().toString(),
+                        name: name,
+                        category: selectedPlantType,
+                        frequencyInDays: frequency,
+                        lastCompleted: DateTime.now(),
+                      ),
+                    );
+
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('Add'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (nameController.text.isNotEmpty) {
-                  taskProvider.addTask(
-                    Task(
-                      id: DateTime.now().toString(),
-                      name: nameController.text,
-                      category: 'Plant', // Hardcoded as Plant
-                      frequencyInDays: int.tryParse(freqController.text) ?? 1,
-                      lastCompleted: DateTime.now(),
-                    ),
-                  );
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
