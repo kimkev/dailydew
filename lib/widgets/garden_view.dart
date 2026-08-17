@@ -102,12 +102,17 @@ class GardenView extends StatelessWidget {
                         children: [
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               // THE DIRT SLOT
                               color: isSelected
                                   ? Colors.white.withValues(alpha: 0.5)
-                                  : colorScheme.scrim,
+                                  : plant.isDone
+                                  ? const Color(0xFF4E342E) // Dark, damp soil
+                                  : const Color(
+                                      0xFF8D6E63,
+                                    ), // Lighter, dry soil
                               shape: BoxShape.circle,
                               border: isSelected
                                   ? Border.all(color: Colors.white, width: 2)

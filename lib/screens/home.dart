@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // We keep this because Tab selection is "UI State," not "Global Data"
   int _selectedIndex = 0;
 
-  void _showAddTaskDialog() {
+  void _showAddPlantDialog() {
     final nameController = TextEditingController();
     final freqController = TextEditingController(text: '1');
     String selectedPlantType = 'Flower';
@@ -172,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.check_circle_outline),
-            label: 'Tasks',
+            label: 'Plants',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.yard_outlined),
@@ -184,9 +184,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // Only show the button if _selectedIndex is 0 (the Tasks tab)
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton.extended(
-              onPressed: _showAddTaskDialog,
+              onPressed: _showAddPlantDialog,
               icon: const Icon(Icons.add),
-              label: const Text("New Task"),
+              label: const Text("Add Plant"),
             )
           : null, // Hide it completely on other tabs
     );
