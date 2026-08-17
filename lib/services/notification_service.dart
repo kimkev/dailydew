@@ -68,6 +68,11 @@ class NotificationService {
     return false;
   }
 
+  Future<bool> areNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('notificationsEnabled') ?? true;
+  }
+
   Future<void> schedulePlantReminder({
     required int id,
     required String plantName,

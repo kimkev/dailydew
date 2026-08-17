@@ -14,6 +14,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   TimeOfDay _reminderTime = const TimeOfDay(hour: 9, minute: 0);
   String _userName = "Gardener";
+  bool _notificationsEnabled = true;
 
   @override
   void initState() {
@@ -28,6 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final int hour = prefs.getInt('reminderHour') ?? 9;
       final int minute = prefs.getInt('reminderMinute') ?? 0;
       _reminderTime = TimeOfDay(hour: hour, minute: minute);
+      _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
     });
   }
 
@@ -138,6 +140,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _toggleNotifications(bool value) async {
+    setState(() => _notificationsEnabled = value);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notificationsEnabled', value);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(value ? "Reminders enabled" : "Reminders disabled"),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -163,18 +181,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: _editName,
           ),
 
-          // 2. Notification Time
-          ListTile(
-            leading: Icon(
-              Icons.notifications_outlined,
+          // Notification Toggle Switch
+          SwitchListTile(
+            secondary: Icon(
+              Icons.notifications_active,
               color: colorScheme.primary,
             ),
-            title: const Text('Daily Reminder Time'),
+            title: const Text("Enable Reminders"),
             subtitle: Text(
-              'Reminders at ${_reminderTime.format(context)}',
+              "Daily at ${_reminderTime.format(context)}",
               style: TextStyle(color: theme.hintColor),
             ),
-            trailing: Icon(Icons.edit, size: 18, color: theme.hintColor),
+            value: _notificationsEnabled,
+            onChanged: _toggleNotifications,
+          ),
+
+          // Reminder Time (now just for editing the time)
+          ListTile(
+            leading: Icon(Icons.access_time, color: colorScheme.primary),
+            title: const Text('Reminder Time'),
+            trailing: Icon(Icons.chevron_right, color: theme.hintColor),
             onTap: _editTime,
           ),
 

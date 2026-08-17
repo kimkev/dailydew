@@ -59,7 +59,7 @@ class TaskProvider extends ChangeNotifier {
   }
 
   //  Action: Toggle/Growth
-  void toggleTask(int index) {
+  Future<void> toggleTask(int index) async {
     _tasks[index].isDone = !_tasks[index].isDone;
 
     if (_tasks[index].isDone) {
@@ -71,11 +71,15 @@ class TaskProvider extends ChangeNotifier {
 
       // --- Schedule Reminder ---
       // We use .hashCode to turn the String ID into an Integer for the notification
-      NotificationService().schedulePlantReminder(
-        id: _tasks[index].id.hashCode,
-        plantName: _tasks[index].name,
-        days: _tasks[index].frequencyInDays,
-      );
+      final notificationsEnabled = await NotificationService()
+          .areNotificationsEnabled();
+      if (notificationsEnabled) {
+        await NotificationService().schedulePlantReminder(
+          id: _tasks[index].id.hashCode,
+          plantName: _tasks[index].name,
+          days: _tasks[index].frequencyInDays,
+        );
+      }
     }
     _saveTasks();
     notifyListeners();
@@ -140,7 +144,7 @@ class TaskProvider extends ChangeNotifier {
       // 0.03 (Top) allows the plant to sit much closer to the top fence
       // 0.92 (Bottom) leaves a tiny bit of extra room for the name label
       double clampedY = y.clamp(0.03, 0.92);
-      
+
       // 2. ONLY update and notify if the position is actually different
       if (_tasks[index].positionX != clampedX ||
           _tasks[index].positionY != clampedY) {

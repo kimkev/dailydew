@@ -136,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text('Hi, ${taskProvider.userName}! 🌱'),
         actions: [
           IconButton(
