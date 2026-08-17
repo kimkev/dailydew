@@ -75,7 +75,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // --- EDIT NAME DIALOG ---
   Future<void> _editName() async {
     final theme = Theme.of(context);
-    TextEditingController nameController = TextEditingController(text: _userName);
+    TextEditingController nameController = TextEditingController(
+      text: _userName,
+    );
 
     await showDialog(
       context: context,
@@ -99,7 +101,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               String newName = nameController.text.trim();
               if (newName.isNotEmpty) {
-                Provider.of<TaskProvider>(context, listen: false).updateUserName(newName);
+                Provider.of<TaskProvider>(
+                  context,
+                  listen: false,
+                ).updateUserName(newName);
                 setState(() => _userName = newName);
                 if (mounted) Navigator.pop(context);
               }
@@ -126,9 +131,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _reminderTime = picked);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Reminder time updated!")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Reminder time updated!")));
       }
     }
   }
@@ -160,7 +165,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // 2. Notification Time
           ListTile(
-            leading: Icon(Icons.notifications_outlined, color: colorScheme.primary),
+            leading: Icon(
+              Icons.notifications_outlined,
+              color: colorScheme.primary,
+            ),
             title: const Text('Daily Reminder Time'),
             subtitle: Text(
               'Reminders at ${_reminderTime.format(context)}',
@@ -195,7 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
-              
+
               if (!context.mounted) return;
 
               ScaffoldMessenger.of(context).showSnackBar(
@@ -212,10 +220,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // 5. Upgrade to Pro
           ListTile(
-            leading: const Icon(Icons.star, color: Colors.orange), // Kept as brand color
+            leading: const Icon(
+              Icons.star,
+              color: Colors.orange,
+            ), // Kept as brand color
             title: const Text('Upgrade to Pro'),
-            subtitle: Text('Unlock all features', style: TextStyle(color: theme.hintColor)),
-            onTap: () => print('Pro tapped'),
+            subtitle: Text(
+              'Coming soon',
+              style: TextStyle(color: theme.hintColor),
+            ),
+            onTap: () {
+              // TODO: Implement Pro features
+            },
           ),
         ],
       ),

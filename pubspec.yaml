@@ -1,5 +1,5 @@
 name: my_first_app
-description: "A new Flutter project."
+description: "PlantPal - Your plant watering reminder and virtual garden companion app."
 publish_to: 'none'
 
 version: 1.0.0+1

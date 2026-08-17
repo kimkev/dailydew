@@ -262,6 +262,7 @@ class TaskList extends StatelessWidget {
                                             .colorScheme
                                             .surfaceContainerHighest,
 
+                                        persist: false,
                                         action: SnackBarAction(
                                           label: "UNDO",
                                           textColor: theme.colorScheme.primary,
@@ -318,10 +319,12 @@ class TaskList extends StatelessWidget {
                           PopupMenuButton<String>(
                             icon: Icon(Icons.more_vert, color: theme.hintColor),
                             onSelected: (val) {
-                              if (val == 'edit')
+                              if (val == 'edit') {
                                 _showEditPlantDialog(context, item);
-                              if (val == 'delete')
+                              }
+                              if (val == 'delete') {
                                 _showDeleteConfirmation(context, item, index);
+                              }
                             },
                             itemBuilder: (ctx) => [
                               const PopupMenuItem(

@@ -1,4 +1,5 @@
 import 'dart:io'; // Required for Platform check
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -43,15 +44,6 @@ class NotificationService {
     );
 
     await _notificationsPlugin.initialize(settings: initSettings);
-  }
-
-  Future<void> checkPending() async {
-    final List<PendingNotificationRequest> pending = await _notificationsPlugin
-        .pendingNotificationRequests();
-    print("PENDING COUNT: ${pending.length}");
-    for (var p in pending) {
-      print("Pending ID: ${p.id} | Title: ${p.title}");
-    }
   }
 
   Future<void> requestPermissions() async {
@@ -131,12 +123,8 @@ class NotificationService {
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
-
-      print(
-        "SUCCESS: Scheduled for $hour:$minute on ${scheduledDate.day}/${scheduledDate.month}",
-      );
     } catch (e) {
-      print("ERROR: Could not schedule: $e");
+      debugPrint('Notification scheduling failed: $e');
     }
   }
 

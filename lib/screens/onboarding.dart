@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/notification_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -14,7 +13,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _nameController = TextEditingController();
   int _currentPage = 0;
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
-  bool _remindersEnabled = false;
+  final bool _remindersEnabled = false;
 
   Future<void> _pickTime() async {
     final TimeOfDay? picked = await showTimePicker(
@@ -187,24 +186,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _remindersEnabled
-                            ? null
-                            : () async {
-                                await NotificationService()
-                                    .requestPermissions();
-                                await NotificationService().showInstantNotification(
-                                  id: 1,
-                                  title: "Reminders Enabled! 🎉",
-                                  body:
-                                      "We'll remind you at ${_selectedTime.format(context)}",
-                                );
-                                setState(() => _remindersEnabled = true);
-                              },
-                        icon: Icon(
-                          _remindersEnabled
-                              ? Icons.check_circle
-                              : Icons.notifications_active,
-                        ),
+                        onPressed: () {
+                          if (_currentPage == 1 &&
+                              _nameController.text.trim().isEmpty) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please enter your name to continue!',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          if (_currentPage < 2) {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeIn,
+                            );
+                          } else {
+                            _finishOnboarding();
+                          }
+                        },
                         label: Text(
                           _remindersEnabled
                               ? "Reminders Ready!"
