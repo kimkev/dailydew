@@ -15,6 +15,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
   bool _remindersEnabled = false;
+  String? _permissionDeniedMessage;
 
   Future<void> _pickTime() async {
     final TimeOfDay? picked = await showTimePicker(
@@ -65,10 +66,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               // Page 1: Intro
               _buildPage(
                 context: context,
-                icon: Icons.psychology_alt,
-                title: "Master Your Routine",
+                icon: Icons.water_drop,
+                title: "Your Plant Companion",
                 description:
-                    "Science shows that tracking habits helps you stick to them.",
+                    "Never forget to water your plants again. Build healthy habits for you and your green friends.",
                 iconColor: colorScheme.primary,
               ),
 
@@ -79,7 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.badge_outlined,
+                      Icons.person_outline,
                       size: 100,
                       color: colorScheme.primary,
                     ),
@@ -118,8 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Icon(
                       Icons.notifications_active_outlined,
                       size: 100,
-                      color: colorScheme
-                          .secondary, // Matches the blue water drop theme
+                      color: colorScheme.primary,
                     ),
                     const SizedBox(height: 30),
                     Text(
@@ -138,175 +138,160 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 40),
-
-                    const Text(
-                      "What time works best for you?",
-                      style: TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Time Picker Box
-                    InkWell(
-                      onTap: _pickTime,
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colorScheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              color: colorScheme.onSecondaryContainer,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              _selectedTime.format(context),
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSecondaryContainer,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Enable Reminders Button
+                    const SizedBox(height: 50),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: _remindersEnabled
-                            ? null
+                            ? _finishOnboarding
                             : () async {
-                                final reminderTimeText = _selectedTime.format(
-                                  context,
-                                );
-                                final scaffoldMessenger = ScaffoldMessenger.of(
-                                  context,
+                                // Step 1: Pick time
+                                final picked = await showTimePicker(
+                                  context: context,
+                                  initialTime: _selectedTime,
                                 );
 
+                                if (picked == null && !context.mounted) return;
+
+                                final formattedTime = picked?.format(context);
+
+                                setState(() => _selectedTime = picked!);
+
+                                // 4. Request permissions
                                 final permissionGranted =
                                     await NotificationService()
                                         .requestPermissions();
 
+                                // 5. Check mounted again after the second await
                                 if (!mounted) return;
 
                                 if (!permissionGranted) {
-                                  scaffoldMessenger.showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Notifications are disabled. Enable them in your device settings to receive reminders.',
-                                      ),
-                                    ),
-                                  );
+                                  setState(() {
+                                    _permissionDeniedMessage =
+                                        'Notifications disabled. You can enable them in settings later.';
+                                  });
                                   return;
                                 }
-
                                 await NotificationService()
                                     .showInstantNotification(
                                       id: 1,
                                       title: 'Reminders Enabled! 🎉',
                                       body:
-                                          "We'll remind you at $reminderTimeText",
+                                          "We'll remind you at $formattedTime",
                                     );
 
                                 if (!mounted) return;
-
-                                setState(() {
-                                  _remindersEnabled = true;
-                                });
+                                setState(() => _remindersEnabled = true);
                               },
+
                         icon: Icon(
                           _remindersEnabled
                               ? Icons.check_circle
-                              : Icons.notifications_active,
+                              : Icons.access_time,
                         ),
                         label: Text(
                           _remindersEnabled
-                              ? 'Reminders Ready!'
-                              : 'Enable Reminders',
+                              ? 'Get Started'
+                              : 'Set Reminder & Continue',
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _remindersEnabled
-                              ? colorScheme.tertiaryContainer
-                              : colorScheme.secondary,
-                          foregroundColor: _remindersEnabled
-                              ? colorScheme.onTertiaryContainer
-                              : colorScheme.onSecondary,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(15),
                           ),
                         ),
                       ),
                     ),
+                    // Skip button - only show if reminders not enabled AND no permission denied
+                    if (!_remindersEnabled &&
+                        _permissionDeniedMessage == null) ...[
+                      const SizedBox(height: 15),
+                      TextButton(
+                        onPressed: _finishOnboarding,
+                        child: Text(
+                          'Skip for now',
+                          style: TextStyle(
+                            color: theme.hintColor,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    // Show message if permission was denied
+                    if (_permissionDeniedMessage != null &&
+                        !_remindersEnabled) ...[
+                      const SizedBox(height: 15),
+                      TextButton(
+                        onPressed: _finishOnboarding,
+                        child: const Text(
+                          'Continue Anyway',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _permissionDeniedMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: theme.hintColor, fontSize: 13),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
 
-          // Bottom Navigation
-          Positioned(
-            bottom: 50,
-            left: 30,
-            right: 30,
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    3,
-                    (index) => _buildDot(index, colorScheme),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 55),
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+          // Bottom Navigation - Only show on pages 0 and 1
+          if (_currentPage < 2)
+            Positioned(
+              bottom: 50,
+              left: 30,
+              right: 30,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      3,
+                      (index) => _buildDot(index, colorScheme),
                     ),
                   ),
-                  onPressed: () {
-                    if (_currentPage == 1 &&
-                        _nameController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter your name to continue!'),
-                        ),
-                      );
-                      return;
-                    }
-                    if (_currentPage < 2) {
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 55),
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (_currentPage == 1 &&
+                          _nameController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Please enter your name to continue!',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
                       _pageController.nextPage(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeIn,
                       );
-                    } else {
-                      _finishOnboarding();
-                    }
-                  },
-                  child: Text(_currentPage == 2 ? "Get Started" : "Next"),
-                ),
-              ],
+                    },
+                    child: const Text("Next"),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
