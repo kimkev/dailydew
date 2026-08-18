@@ -24,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final nameController = TextEditingController();
     final freqController = TextEditingController(text: '1');
     String selectedPlantType = 'Flower';
+    String selectedAgeOption = 'new';
 
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
@@ -84,6 +85,36 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedAgeOption,
+                      decoration: const InputDecoration(labelText: 'Plant Age'),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'new',
+                          child: Text('🌱 New plant (seed/seedling)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'weeks',
+                          child: Text('🌿 Few weeks old'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'months',
+                          child: Text('🪴 Few months old'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'years',
+                          child: Text('🌳 Mature plant'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() {
+                          selectedAgeOption = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
                     TextField(
                       controller: freqController,
                       decoration: const InputDecoration(
@@ -107,6 +138,56 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (name.isEmpty) {
                       return;
                     }
+                    int startingGrowth = 0;
+                    switch (selectedAgeOption) {
+                      case 'weeks':
+                        startingGrowth = 20; // 20% grown
+                        break;
+                      case 'months':
+                        startingGrowth = 50; // 50% grown
+                        break;
+                      case 'years':
+                        startingGrowth = 80; // 80% grown (mature)
+                        break;
+                      default:
+                        startingGrowth = 0; // New plant
+                    }
+
+                    // Calculate dateAdded based on age
+                    DateTime dateAdded;
+                    switch (selectedAgeOption) {
+                      case 'weeks':
+                        dateAdded = DateTime.now().subtract(
+                          const Duration(days: 21),
+                        );
+                        break;
+                      case 'months':
+                        dateAdded = DateTime.now().subtract(
+                          const Duration(days: 90),
+                        );
+                        break;
+                      case 'years':
+                        dateAdded = DateTime.now().subtract(
+                          const Duration(days: 365),
+                        );
+                        break;
+                      default:
+                        dateAdded = DateTime.now();
+                    }
+
+                    // Calculate position: 3 columns, auto-place from top to bottom
+                    final existingTasks = taskProvider.tasks;
+                    final column =
+                        existingTasks.length ~/
+                        3; // 0, 0, 0, 1, 1, 1, 2, 2, 2...
+                    final rowInColumn =
+                        existingTasks.length %
+                        3; // 0, 1, 2, 0, 1, 2, 0, 1, 2...
+
+                    // X: 25% (left), 50% (center), 75% (right)
+                    final nextX = 0.25 + (column * 0.25);
+                    // Y: 15%, 35%, 55% (spaced vertically)
+                    final nextY = 0.24 + (rowInColumn * 0.20);
 
                     taskProvider.addTask(
                       Task(
@@ -115,6 +196,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         category: selectedPlantType,
                         frequencyInDays: frequency,
                         lastCompleted: DateTime.now(),
+                        growthLevel: startingGrowth,
+                        dateAdded: dateAdded,
+                        positionX: nextX.clamp(0.1, 0.9),
+                        positionY: nextY.clamp(0.1, 0.9),
                       ),
                     );
 

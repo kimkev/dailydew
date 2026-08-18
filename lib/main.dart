@@ -45,14 +45,15 @@ class MyApp extends StatelessWidget {
           // --- LIGHT THEME (Clean & Natural) ---
           theme: ThemeData(
             useMaterial3: true,
+            scaffoldBackgroundColor: const Color(0xFFF1E8D8),
             colorScheme:
                 ColorScheme.fromSeed(
                   seedColor: Colors.green,
-                  surface: const Color(0xFFF8F9FA),
+                  surface: const Color(0xFFF7F0E4),
                 ).copyWith(
                   secondary: Colors.blue,
                   secondaryContainer: const Color(0xFFD1E4FF),
-                  onSecondaryContainer: Colors.blue.shade700,
+                  onSecondaryContainer: Colors.blue,
                   tertiary: const Color(0xFFDCEDC8),
                   onTertiary: const Color(0xFFAED581),
                   tertiaryContainer: const Color(
@@ -73,7 +74,7 @@ class MyApp extends StatelessWidget {
               ),
             ),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFFF8F9FA),
+              backgroundColor: Color(0xFFF1E8D8),
               elevation: 0,
               centerTitle: false,
               titleTextStyle: TextStyle(
