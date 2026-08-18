@@ -124,9 +124,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // This is like 'useContext' in React.
-    // It tells this widget: "Watch the TaskProvider. If it changes, rebuild this screen."
     final taskProvider = Provider.of<TaskProvider>(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     // Calculate progress using data from the provider
     int completedCount = taskProvider.tasks.where((t) => t.isDone).length;
@@ -139,6 +139,74 @@ class _HomeScreenState extends State<HomeScreen> {
         automaticallyImplyLeading: false,
         title: Text('Hi, ${taskProvider.userName}! 🌱'),
         actions: [
+          // Water All Button
+          if (taskProvider.tasks.any((t) => !t.isDone))
+            TextButton.icon(
+              onPressed: () {
+                // Track which plants we're about to water
+                final thirstyPlantIds = taskProvider.tasks
+                    .where((t) => !t.isDone)
+                    .map((t) => t.id)
+                    .toList();
+
+                final thirstyCount = thirstyPlantIds.length;
+
+                // Water all thirsty plants
+                for (int i = 0; i < taskProvider.tasks.length; i++) {
+                  if (!taskProvider.tasks[i].isDone) {
+                    taskProvider.toggleTask(i);
+                  }
+                }
+
+                // Show confirmation with undo
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      "Watered all $thirstyCount plants! 💧",
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                    duration: const Duration(seconds: 3),
+                    behavior: SnackBarBehavior.floating,
+                    dismissDirection: DismissDirection.horizontal,
+                    margin: const EdgeInsets.only(
+                      bottom: 90,
+                      left: 20,
+                      right: 20,
+                    ),
+                    backgroundColor: colorScheme.surfaceContainerHighest,
+                    persist: false,
+                    action: SnackBarAction(
+                      label: "UNDO",
+                      textColor: colorScheme.primary,
+                      onPressed: () {
+                        // Undo watering for all the plants we just watered
+                        final p = Provider.of<TaskProvider>(
+                          context,
+                          listen: false,
+                        );
+                        for (var taskId in thirstyPlantIds) {
+                          p.undoWatering(taskId);
+                        }
+                      },
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.water_drop, size: 20),
+              label: const Text('Water All'),
+              style: TextButton.styleFrom(
+                foregroundColor: colorScheme.onSecondaryContainer,
+                backgroundColor: colorScheme.secondaryContainer,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => Navigator.pushNamed(context, '/settings'),

@@ -123,6 +123,12 @@ class TaskList extends StatelessWidget {
     );
   }
 
+  String _getDaysSinceWatered(DateTime lastCompleted) {
+    final now = DateTime.now();
+    final difference = now.difference(lastCompleted).inDays;
+    return difference.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Access the global theme once at the top of build
@@ -191,6 +197,7 @@ class TaskList extends StatelessWidget {
                       const SizedBox(width: 16),
 
                       // 2. MIDDLE: Info
+                      // 2. MIDDLE: Info
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +211,6 @@ class TaskList extends StatelessWidget {
                                 decoration: item.isDone
                                     ? TextDecoration.lineThrough
                                     : null,
-                                // Uses theme colors instead of black/grey
                                 color: item.isDone
                                     ? theme.disabledColor
                                     : colorScheme.onSurface,
@@ -216,6 +222,17 @@ class TaskList extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 color: theme.hintColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item.isDone
+                                  ? "Last watered: Today"
+                                  : "Last watered: ${_getDaysSinceWatered(item.lastCompleted)} days ago",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: theme.hintColor,
+                                fontStyle: FontStyle.italic,
                               ),
                             ),
                           ],
