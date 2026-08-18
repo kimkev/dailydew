@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/notification_service.dart';
-import '../models/task.dart';
+import '../models/plant.dart';
 
 class TaskProvider extends ChangeNotifier {
   List<Task> _tasks = [];
@@ -63,14 +63,9 @@ class TaskProvider extends ChangeNotifier {
     _tasks[index].isDone = !_tasks[index].isDone;
 
     if (_tasks[index].isDone) {
-      _tasks[index].lastCompleted = DateTime.now();
-      _tasks[index].growthLevel += 5;
-
-      // --- Increment the Lifetime Stat ---
-      _tasks[index].totalCompletions += 1;
+      _tasks[index].water();
 
       // --- Schedule Reminder ---
-      // We use .hashCode to turn the String ID into an Integer for the notification
       final notificationsEnabled = await NotificationService()
           .areNotificationsEnabled();
       if (notificationsEnabled) {
@@ -80,7 +75,10 @@ class TaskProvider extends ChangeNotifier {
           days: _tasks[index].frequencyInDays,
         );
       }
+    } else {
+      _tasks[index].unwater();
     }
+
     _saveTasks();
     notifyListeners();
   }
@@ -88,6 +86,24 @@ class TaskProvider extends ChangeNotifier {
   //  Action: Delete
   void deleteTask(int index) {
     _tasks.removeAt(index);
+    _saveTasks();
+    notifyListeners();
+  }
+
+  // Action: Water All Plants
+  void waterAll() {
+    for (var task in _tasks) {
+      if (!task.isDone) {
+        task.water();
+
+        // Schedule reminder for next watering
+        NotificationService().schedulePlantReminder(
+          id: task.id.hashCode,
+          plantName: task.name,
+          days: task.frequencyInDays,
+        );
+      }
+    }
     _saveTasks();
     notifyListeners();
   }
@@ -163,12 +179,7 @@ class TaskProvider extends ChangeNotifier {
   void undoWatering(String id) {
     final index = _tasks.indexWhere((t) => t.id == id);
     if (index != -1) {
-      _tasks[index].isDone = false;
-      _tasks[index].growthLevel -= 5; // Revert growth
-      _tasks[index].totalCompletions -= 1;
-      // Note: We don't necessarily need to revert lastCompleted
-      // because isDone = false will make it 'Thirsty' again.
-
+      _tasks[index].unwater();
       _saveTasks();
       notifyListeners();
     }

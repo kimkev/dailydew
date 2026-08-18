@@ -2,7 +2,7 @@ import 'package:my_first_app/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'providers/task_provider.dart';
+import 'providers/plant_provider.dart';
 import 'services/notification_service.dart';
 // Import the screens
 import 'screens/onboarding.dart';

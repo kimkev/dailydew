@@ -3,11 +3,11 @@ import 'package:provider/provider.dart';
 
 // widgets
 import '../widgets/garden_view.dart';
-import '../widgets/task_list.dart';
+import '../widgets/plant_list.dart';
 // models
-import '../models/task.dart';
+import '../models/plant.dart';
 // providers
-import '../providers/task_provider.dart';
+import '../providers/plant_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -62,10 +62,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text('Houseplant 🪴'),
                         ),
                         DropdownMenuItem(
-                          value: 'Cactus',
-                          child: Text('Cactus 🌵'),
+                          value: 'Vegetable',
+                          child: Text('Vegetable 🥬'),
                         ),
-                        DropdownMenuItem(value: 'Tree', child: Text('Tree 🌳')),
+                        DropdownMenuItem(value: 'Herb', child: Text('Herb 🌿')),
+                        DropdownMenuItem(
+                          value: 'Succulent',
+                          child: Text('Succulent 🌵'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Other',
+                          child: Text('Other 🌱'),
+                        ),
                       ],
                       onChanged: (value) {
                         if (value == null) return;
@@ -152,11 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final thirstyCount = thirstyPlantIds.length;
 
                 // Water all thirsty plants
-                for (int i = 0; i < taskProvider.tasks.length; i++) {
-                  if (!taskProvider.tasks[i].isDone) {
-                    taskProvider.toggleTask(i);
-                  }
-                }
+                taskProvider.waterAll();
 
                 // Show confirmation with undo
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -179,7 +183,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: "UNDO",
                       textColor: colorScheme.primary,
                       onPressed: () {
-                        // Undo watering for all the plants we just watered
                         final p = Provider.of<TaskProvider>(
                           context,
                           listen: false,

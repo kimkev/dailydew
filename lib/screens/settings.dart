@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../providers/task_provider.dart';
+import '../providers/plant_provider.dart';
 import '../providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {

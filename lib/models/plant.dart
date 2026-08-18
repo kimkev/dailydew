@@ -74,37 +74,52 @@ class Task {
       '🌴',
     ];
 
-    const cactusStages = [
+    const vegetableStages = [
       '🌰',
       '🌱',
-      '🌵',
-      '🌵',
-      '🌵',
-      '🌵',
-      '🌵',
-      '🌵',
-      '🌵',
-      '🌵',
+      '🌿',
+      '🥬',
+      '🥬',
+      '🥦',
+      '🥕',
+      '🍅',
+      '🌽',
+      '🥗',
     ];
 
-    const treeStages = [
+    const herbStages = [
       '🌰',
       '🌱',
+      '🌿',
+      '🌿',
+      '🌿',
+      '🍃',
+      '🍃',
+      '🌿',
+      '🌿',
+      '🌿',
+    ];
+
+    const succulentStages = [
+      '🌰',
       '🌱',
-      '🌿',
-      '🌿',
-      '🌲',
-      '🌲',
-      '🌲',
-      '🌳',
-      '🌳',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
+      '🌵',
     ];
 
     switch (category.toLowerCase()) {
-      case 'cactus':
-        return cactusStages[growthStage];
-      case 'tree':
-        return treeStages[growthStage];
+      case 'vegetable':
+        return vegetableStages[growthStage];
+      case 'herb':
+        return herbStages[growthStage];
+      case 'succulent':
+        return succulentStages[growthStage];
       case 'houseplant':
       case 'foliage':
         return houseplantStages[growthStage];
@@ -112,6 +127,47 @@ class Task {
       default:
         return flowerStages[growthStage];
     }
+  }
+
+  void water() {
+    // Different progression speeds per category
+    int progression;
+    switch (category.toLowerCase()) {
+      case 'flower':
+      case 'vegetable':
+        progression = 2;
+        break;
+      case 'houseplant':
+      case 'herb':
+      case 'succulent':
+      default:
+        progression = 1;
+    }
+
+    growthLevel = (growthLevel + progression).clamp(0, 99);
+    lastCompleted = DateTime.now();
+    isDone = true;
+    totalCompletions++;
+  }
+
+  void unwater() {
+    // Reverse the watering (for undo)
+    int progression;
+    switch (category.toLowerCase()) {
+      case 'flower':
+      case 'vegetable':
+        progression = 2;
+        break;
+      case 'houseplant':
+      case 'herb':
+      case 'succulent':
+      default:
+        progression = 1;
+    }
+
+    growthLevel = (growthLevel - progression).clamp(0, 99);
+    isDone = false;
+    totalCompletions--;
   }
 
   // Convert to Map
