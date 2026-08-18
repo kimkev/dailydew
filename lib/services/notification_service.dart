@@ -14,6 +14,7 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  static const int wateringSummaryNotificationId = 1000;
 
   // 2. INITIALIZE: This "wakes up" the notification system
   Future<void> init() async {
@@ -133,6 +134,120 @@ class NotificationService {
     }
   }
 
+  Future<void> scheduleWateringSummary({
+    required List<String> plantNames,
+    required int days,
+  }) async {
+    if (plantNames.isEmpty) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hour = prefs.getInt('reminderHour') ?? 9;
+      final minute = prefs.getInt('reminderMinute') ?? 0;
+
+      final now = tz.TZDateTime.now(tz.local);
+      var scheduledDate = now.add(Duration(days: days));
+
+      scheduledDate = tz.TZDateTime(
+        tz.local,
+        scheduledDate.year,
+        scheduledDate.month,
+        scheduledDate.day,
+        hour,
+        minute,
+      );
+
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      final body = plantNames.length == 1
+          ? '${plantNames.first} needs some water today.'
+          : '${plantNames.join(', ')} need water today.';
+
+      await _notificationsPlugin.zonedSchedule(
+        id: wateringSummaryNotificationId,
+        title: plantNames.length == 1
+            ? 'Thirsty Plant! 🌱'
+            : '${plantNames.length} Plants Need Water 💧',
+        body: body,
+        scheduledDate: scheduledDate,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'plant_reminders',
+            'Plant Care Reminders',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            threadIdentifier: 'plant_reminders_group',
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    } catch (e) {
+      debugPrint('Watering summary scheduling failed: $e');
+    }
+  }
+
+  Future<void> scheduleReminderForCurrentlyThirstyPlants({
+    required List<String> plantNames,
+  }) async {
+    if (plantNames.isEmpty) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hour = prefs.getInt('reminderHour') ?? 9;
+      final minute = prefs.getInt('reminderMinute') ?? 0;
+
+      final now = tz.TZDateTime.now(tz.local);
+
+      // Today at the user-selected reminder time.
+      var scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        hour,
+        minute,
+      );
+
+      // If today's selected time has passed, schedule tomorrow instead.
+      if (!scheduledDate.isAfter(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      final title = plantNames.length == 1
+          ? 'Thirsty Plant! 🌱'
+          : '${plantNames.length} Plants Need Water 💧';
+
+      final body = plantNames.length == 1
+          ? '${plantNames.first} needs some water today.'
+          : '${plantNames.join(', ')} need water today.';
+
+      await _notificationsPlugin.zonedSchedule(
+        id: wateringSummaryNotificationId,
+        title: title,
+        body: body,
+        scheduledDate: scheduledDate,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'plant_reminders',
+            'Plant Care Reminders',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            threadIdentifier: 'plant_reminders_group',
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    } catch (e) {
+      debugPrint('Thirsty-plant reminder scheduling failed: $e');
+    }
+  }
+
   Future<void> showInstantNotification({
     required int id,
     required String title,
@@ -141,9 +256,10 @@ class NotificationService {
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'plant_reminders',
-          'Plant Reminders',
+          'Plant Care Reminders',
           importance: Importance.max,
           priority: Priority.high,
+          groupKey: 'com.kimkev.plant_tracker.WATER_GROUP',
         );
 
     const NotificationDetails details = NotificationDetails(

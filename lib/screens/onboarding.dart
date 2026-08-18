@@ -35,6 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await prefs.setString('userName', _nameController.text);
     await prefs.setInt('reminderHour', _selectedTime.hour);
     await prefs.setInt('reminderMinute', _selectedTime.minute);
+    await prefs.setBool('notificationsEnabled', _remindersEnabled);
 
     if (mounted) {
       Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
@@ -151,18 +152,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   initialTime: _selectedTime,
                                 );
 
-                                if (picked == null && !context.mounted) return;
+                                if (picked == null || !context.mounted) return;
 
-                                final formattedTime = picked?.format(context);
+                                final formattedTime = picked.format(context);
 
-                                setState(() => _selectedTime = picked!);
+                                setState(() {
+                                  _selectedTime = picked;
+                                });
 
-                                // 4. Request permissions
                                 final permissionGranted =
                                     await NotificationService()
                                         .requestPermissions();
 
-                                // 5. Check mounted again after the second await
                                 if (!mounted) return;
 
                                 if (!permissionGranted) {
@@ -172,6 +173,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   });
                                   return;
                                 }
+
                                 await NotificationService()
                                     .showInstantNotification(
                                       id: 1,
@@ -181,7 +183,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     );
 
                                 if (!mounted) return;
-                                setState(() => _remindersEnabled = true);
+
+                                setState(() {
+                                  _remindersEnabled = true;
+                                  _permissionDeniedMessage = null;
+                                });
                               },
 
                         icon: Icon(

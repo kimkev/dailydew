@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final name = nameController.text.trim();
                     final frequency = int.tryParse(freqController.text) ?? 1;
 
@@ -203,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final nextX = xPositions[column];
                     final nextY = yPositions[row];
 
-                    taskProvider.addTask(
+                    await taskProvider.addTask(
                       Task(
                         id: DateTime.now().toString(),
                         name: name,
@@ -217,7 +217,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
 
-                    Navigator.pop(dialogContext);
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext);
+                    }
                   },
                   child: const Text('Add'),
                 ),
@@ -249,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Water All Button
           if (taskProvider.tasks.any((t) => !t.isDone))
             TextButton.icon(
-              onPressed: () {
+              onPressed: () async {
                 // Track which plants we're about to water
                 final thirstyPlantIds = taskProvider.tasks
                     .where((t) => !t.isDone)
@@ -259,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final thirstyCount = thirstyPlantIds.length;
 
                 // Water all thirsty plants
-                taskProvider.waterAll();
+                await taskProvider.waterAll();
 
                 // Show confirmation with undo
                 ScaffoldMessenger.of(context).showSnackBar(

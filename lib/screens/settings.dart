@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/plant_provider.dart';
 import '../providers/theme_provider.dart';
+import '../services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -127,19 +128,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
       initialTime: _reminderTime,
     );
 
-    if (picked != null && picked != _reminderTime) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('reminderHour', picked.hour);
-      await prefs.setInt('reminderMinute', picked.minute);
+    if (picked == null || picked == _reminderTime) return;
 
-      setState(() => _reminderTime = picked);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('reminderHour', picked.hour);
+    await prefs.setInt('reminderMinute', picked.minute);
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Reminder time updated!")));
-      }
+    if (!mounted) return;
+
+    setState(() => _reminderTime = picked);
+
+    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+
+    final thirstyPlantNames = taskProvider.tasks
+        .where((plant) => !plant.isDone)
+        .map((plant) => plant.name)
+        .toList();
+
+    if (_notificationsEnabled && thirstyPlantNames.isNotEmpty) {
+      await NotificationService().scheduleReminderForCurrentlyThirstyPlants(
+        plantNames: thirstyPlantNames,
+      );
     }
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Reminder time updated!')));
   }
 
   Future<void> _toggleNotifications(bool value) async {

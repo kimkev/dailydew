@@ -52,34 +52,49 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // Action: Add
-  void addTask(Task task) {
+  Future<void> addTask(Task task) async {
     _tasks.add(task);
-    _saveTasks();
+
+    await _saveTasks();
+
+    final notificationsEnabled = await NotificationService()
+        .areNotificationsEnabled();
+
+    if (notificationsEnabled && !task.isDone) {
+      final thirstyPlantNames = _tasks
+          .where((plant) => !plant.isDone)
+          .map((plant) => plant.name)
+          .toList();
+
+      await NotificationService().scheduleReminderForCurrentlyThirstyPlants(
+        plantNames: thirstyPlantNames,
+      );
+    }
+
     notifyListeners();
   }
 
   //  Action: Toggle/Growth
   Future<void> toggleTask(int index) async {
-    _tasks[index].isDone = !_tasks[index].isDone;
+    final task = _tasks[index];
 
-    if (_tasks[index].isDone) {
-      _tasks[index].water();
+    if (task.isDone) {
+      task.unwater();
+    } else {
+      task.water();
 
-      // --- Schedule Reminder ---
       final notificationsEnabled = await NotificationService()
           .areNotificationsEnabled();
+
       if (notificationsEnabled) {
-        await NotificationService().schedulePlantReminder(
-          id: _tasks[index].id.hashCode,
-          plantName: _tasks[index].name,
-          days: _tasks[index].frequencyInDays,
+        await NotificationService().scheduleWateringSummary(
+          plantNames: [task.name],
+          days: task.frequencyInDays,
         );
       }
-    } else {
-      _tasks[index].unwater();
     }
 
-    _saveTasks();
+    await _saveTasks();
     notifyListeners();
   }
 
@@ -91,20 +106,33 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // Action: Water All Plants
-  void waterAll() {
-    for (var task in _tasks) {
+  Future<void> waterAll() async {
+    final wateredTasks = <Task>[];
+
+    for (final task in _tasks) {
       if (!task.isDone) {
         task.water();
+        wateredTasks.add(task);
+      }
+    }
 
-        // Schedule reminder for next watering
-        NotificationService().schedulePlantReminder(
-          id: task.id.hashCode,
-          plantName: task.name,
-          days: task.frequencyInDays,
+    if (wateredTasks.isNotEmpty) {
+      final notificationsEnabled = await NotificationService()
+          .areNotificationsEnabled();
+
+      if (notificationsEnabled) {
+        final shortestFrequency = wateredTasks
+            .map((task) => task.frequencyInDays)
+            .reduce((a, b) => a < b ? a : b);
+
+        await NotificationService().scheduleWateringSummary(
+          plantNames: wateredTasks.map((task) => task.name).toList(),
+          days: shortestFrequency,
         );
       }
     }
-    _saveTasks();
+
+    await _saveTasks();
     notifyListeners();
   }
 
