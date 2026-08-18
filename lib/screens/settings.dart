@@ -303,8 +303,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final url = Uri.parse(
                 'https://kimkev.github.io/privacypolicies/privacy-plantpal.html',
               );
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
+
+              final launched = await launchUrl(
+                url,
+                mode: LaunchMode.externalApplication,
+              );
+
+              if (!launched && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Could not open the Privacy Policy.'),
+                  ),
+                );
               }
             },
           ),
