@@ -177,17 +177,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Calculate position: 3 columns, auto-place from top to bottom
                     final existingTasks = taskProvider.tasks;
-                    final column =
-                        existingTasks.length ~/
-                        3; // 0, 0, 0, 1, 1, 1, 2, 2, 2...
-                    final rowInColumn =
-                        existingTasks.length %
-                        3; // 0, 1, 2, 0, 1, 2, 0, 1, 2...
+                    // 3 columns × 3 rows.
+                    // The bottom-right corner is intentionally left open for the pond.
+                    const xPositions = [0.22, 0.50, 0.76];
+                    const yPositions = [0.20, 0.43, 0.68];
 
-                    // X: 25% (left), 50% (center), 75% (right)
-                    final nextX = 0.25 + (column * 0.25);
-                    // Y: 15%, 35%, 55% (spaced vertically)
-                    final nextY = 0.24 + (rowInColumn * 0.20);
+                    // Nine normal slots, except index 8: lower-right pond space.
+                    const usableSlots = [
+                      0, // top-left
+                      1, // top-center
+                      2, // top-right
+                      3, // middle-left
+                      4, // middle-center
+                      5, // middle-right
+                      6, // bottom-left
+                      7, // bottom-center
+                    ];
+
+                    final plantNumber = existingTasks.length;
+                    final slot = usableSlots[plantNumber % usableSlots.length];
+
+                    final column = slot % 3;
+                    final row = slot ~/ 3;
+
+                    final nextX = xPositions[column];
+                    final nextY = yPositions[row];
 
                     taskProvider.addTask(
                       Task(

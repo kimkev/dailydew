@@ -133,42 +133,48 @@ class GardenView extends StatelessWidget {
                                   alignment: Alignment.bottomCenter,
                                   clipBehavior: Clip.none,
                                   children: [
-                                    // Soft soil/shadow patch behind the plant.
-                                    Container(
-                                      width: 72,
-                                      height: 20,
-                                      margin: const EdgeInsets.only(bottom: 2),
-                                      decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFF5D4037,
-                                        ).withValues(alpha: 0.30),
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-
-                                    // Existing plant circle, placed above the soil patch.
+                                    // Soil patch: light when thirsty, dark after watering.
                                     AnimatedContainer(
                                       duration: const Duration(
                                         milliseconds: 300,
                                       ),
                                       curve: Curves.easeInOut,
-                                      padding: const EdgeInsets.all(10),
+                                      width: 78,
+                                      height: 26,
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? Colors.white.withValues(
-                                                alpha: 0.5,
+                                            ? colorScheme.primary.withValues(
+                                                alpha: 0.55,
                                               )
                                             : plant.isDone
-                                            ? const Color(0xFF4E342E)
-                                            : const Color(0xFF8D6E63),
-                                        shape: BoxShape.circle,
+                                            ? const Color(
+                                                0xFF4E342E,
+                                              ) // Dark, moist soil
+                                            : const Color(
+                                                0xFF9A7058,
+                                              ), // Light, dry soil
+                                        borderRadius: BorderRadius.circular(30),
                                         border: isSelected
                                             ? Border.all(
                                                 color: Colors.white,
                                                 width: 2,
                                               )
                                             : null,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
                                       ),
+                                    ),
+
+                                    // Plant floats just above its soil.
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 6),
                                       child: Text(
                                         _getGrowthEmoji(plant),
                                         style: TextStyle(
@@ -244,28 +250,93 @@ class GardenView extends StatelessWidget {
 
   List<Widget> _buildBackgroundDecor() {
     return [
+      // Horizontal riverbed across the middle of the garden.
       Positioned(
-        top: 20,
-        left: 30,
+        bottom: 22,
+        right: 20,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Outer bank / rocks
+            Container(
+              width: 112,
+              height: 78,
+              decoration: BoxDecoration(
+                color: const Color(0xFF8C6B57).withValues(alpha: 0.40),
+                borderRadius: BorderRadius.circular(50),
+              ),
+            ),
+
+            // Pond water
+            Container(
+              width: 96,
+              height: 64,
+              decoration: BoxDecoration(
+                color: const Color(0xFF83CDEA).withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(45),
+                border: Border.all(
+                  color: const Color(0xFF4AA8D0).withValues(alpha: 0.45),
+                  width: 2,
+                ),
+              ),
+            ),
+
+            // Water ripples
+            const Text('〰️ 〰️', style: TextStyle(fontSize: 13)),
+
+            // Lily-pad / pond life accent
+            const Positioned(
+              right: 15,
+              bottom: 10,
+              child: Text('🪷', style: TextStyle(fontSize: 16)),
+            ),
+
+            // Rocks overlap the pond edge.
+            const Positioned(
+              left: -7,
+              bottom: 4,
+              child: Text('🪨', style: TextStyle(fontSize: 18)),
+            ),
+            const Positioned(
+              right: -6,
+              top: 4,
+              child: Text('🪨', style: TextStyle(fontSize: 16)),
+            ),
+          ],
+        ),
+      ),
+
+      // Small clusters of natural garden decoration.
+      Positioned(
+        top: 28,
+        left: 22,
         child: Opacity(
-          opacity: 0.3,
-          child: const Text('🌼', style: TextStyle(fontSize: 12)),
+          opacity: 0.25,
+          child: const Text('🌼', style: TextStyle(fontSize: 15)),
         ),
       ),
       Positioned(
-        bottom: 40,
-        right: 50,
+        top: 82,
+        right: 24,
         child: Opacity(
-          opacity: 0.2,
-          child: const Text('🍀', style: TextStyle(fontSize: 14)),
+          opacity: 0.20,
+          child: const Text('🌿', style: TextStyle(fontSize: 17)),
         ),
       ),
       Positioned(
-        top: 100,
+        bottom: 34,
+        left: 26,
+        child: Opacity(
+          opacity: 0.22,
+          child: const Text('🍀', style: TextStyle(fontSize: 15)),
+        ),
+      ),
+      Positioned(
+        bottom: 88,
         right: 30,
         child: Opacity(
-          opacity: 0.2,
-          child: const Text('🌸', style: TextStyle(fontSize: 10)),
+          opacity: 0.20,
+          child: const Text('🌸', style: TextStyle(fontSize: 13)),
         ),
       ),
     ];
