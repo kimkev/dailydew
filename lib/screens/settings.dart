@@ -332,7 +332,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             visualDensity: VisualDensity.compact,
             onTap: () async {
               final url = Uri.parse(
-                'https://kimkev.github.io/privacypolicies/privacy-plantpal.html',
+                'https://kimkev.github.io/privacypolicies/privacy-PlantSip.html',
               );
 
               final launched = await launchUrl(
