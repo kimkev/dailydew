@@ -17,7 +17,7 @@ PlantSip is a minimalistic, garden‑themed plant care tracker for Android. It h
 
 - **Framework**: Flutter (Dart)
 - **Architecture**: Custom reactive pattern using `SharedRef` (no external state management library)
-- **Local storage**: SQLite (via `sqflite`)
+- **Local storage**: `shared_preferences`
 - **Notifications**: `flutter_local_notifications`
 - **Platform**: Android
 
