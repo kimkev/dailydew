@@ -8,6 +8,7 @@ import '../widgets/plant_list.dart';
 import '../models/plant.dart';
 // providers
 import '../providers/plant_provider.dart';
+import '../services/sound_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -216,6 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         positionY: nextY.clamp(0.1, 0.9),
                       ),
                     );
+                    await SoundService.instance.playPlantAdded();
 
                     if (dialogContext.mounted) {
                       Navigator.pop(dialogContext);
@@ -262,6 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Water all thirsty plants
                 await taskProvider.waterAll();
+                await SoundService.instance.playWaterAll();
 
                 // Show confirmation with undo
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -337,8 +340,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
             )
-          : const GardenView(),
-
+          : GardenView(),
+          
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),

@@ -18,6 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   TimeOfDay _reminderTime = const TimeOfDay(hour: 9, minute: 0);
   String _userName = "Gardener";
   bool _notificationsEnabled = true;
+  bool _soundsEnabled = true;
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final int minute = prefs.getInt('reminderMinute') ?? 0;
       _reminderTime = TimeOfDay(hour: hour, minute: minute);
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
+      _soundsEnabled = prefs.getBool('soundsEnabled') ?? true;
     });
   }
 
@@ -220,6 +222,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             trailing: Icon(Icons.chevron_right, color: theme.hintColor),
             onTap: _editTime,
+          ),
+
+          SwitchListTile(
+            secondary: Icon(Icons.volume_up, color: colorScheme.primary),
+            title: const Text("Garden Sounds"),
+            value: _soundsEnabled,
+            onChanged: (value) async {
+              setState(() => _soundsEnabled = value);
+
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('soundsEnabled', value);
+            },
           ),
 
           // 3. App Theme

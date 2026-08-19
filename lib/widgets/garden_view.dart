@@ -4,9 +4,24 @@ import 'package:provider/provider.dart';
 
 import '../models/plant.dart';
 import '../providers/plant_provider.dart';
+import '../services/sound_service.dart';
 
-class GardenView extends StatelessWidget {
+class GardenView extends StatefulWidget {
   const GardenView({super.key});
+
+  @override
+  State<GardenView> createState() => _GardenViewState();
+}
+
+class _GardenViewState extends State<GardenView> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SoundService.instance.playGardenChirp();
+    });
+  }
 
   String _getGrowthEmoji(Task plant) {
     return plant.emoji;

@@ -136,6 +136,9 @@ class Task {
   }
 
   void water() {
+    final previousLastCompleted = lastCompleted;
+    final now = DateTime.now();
+
     int progression;
     switch (category.toLowerCase()) {
       case 'flower':
@@ -150,21 +153,19 @@ class Task {
     }
 
     growthLevel = (growthLevel + progression).clamp(0, 99);
-    lastCompleted = DateTime.now();
+    lastCompleted = now;
     isDone = true;
     totalCompletions++;
 
-    // Update streaks
-    final daysSinceLast = DateTime.now().difference(lastCompleted).inDays;
+    final daysSinceLast = now.difference(previousLastCompleted).inDays;
+
     if (daysSinceLast <= frequencyInDays) {
-      // Watered on time - increment streak
       currentStreak++;
       if (currentStreak > longestStreak) {
         longestStreak = currentStreak;
       }
     } else {
-      // Missed a watering - reset streak
-      currentStreak = 1; // Start fresh
+      currentStreak = 1;
     }
   }
 

@@ -3,14 +3,13 @@ import '../models/plant.dart';
 import 'package:provider/provider.dart';
 import '../providers/plant_provider.dart';
 import '../screens/plant_detail_screen.dart';
-
+import '../services/sound_service.dart';
 
 class TaskList extends StatelessWidget {
   final List<Task> tasks;
   final double progress;
   final Function(int) onDelete;
   final Function(int, bool) onToggle;
-
 
   const TaskList({
     super.key,
@@ -20,70 +19,97 @@ class TaskList extends StatelessWidget {
     required this.onToggle,
   });
 
-
   // --- Helper: Edit Dialog ---
   void _showEditPlantDialog(BuildContext context, Task plant) {
-    TextEditingController nameController = TextEditingController(
-      text: plant.name,
-    );
-    TextEditingController freqController = TextEditingController(
+    final nameController = TextEditingController(text: plant.name);
+    final freqController = TextEditingController(
       text: plant.frequencyInDays.toString(),
     );
+
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
+    double growthLevel = plant.growthLevel.toDouble();
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text("Edit ${plant.name}"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Plant Name"),
-                autofocus: true,
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: freqController,
-                decoration: const InputDecoration(
-                  labelText: "Water every (days)",
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Edit ${plant.name}'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Plant Name',
+                      ),
+                      autofocus: true,
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: freqController,
+                      decoration: const InputDecoration(
+                        labelText: 'Water every (days)',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Current growth: ${growthLevel.round()}%',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    Slider(
+                      value: growthLevel,
+                      min: 0,
+                      max: 100,
+                      divisions: 20,
+                      label: '${growthLevel.round()}%',
+                      onChanged: (value) {
+                        setDialogState(() {
+                          growthLevel = value;
+                        });
+                      },
+                    ),
+                  ],
                 ),
-                keyboardType: TextInputType.number,
               ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                taskProvider.editTask(
-                  plant.id,
-                  nameController.text,
-                  int.tryParse(freqController.text) ?? 1,
-                );
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text("Save Changes"),
-          ),
-        ],
-      ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final name = nameController.text.trim();
+                    final frequency = int.tryParse(freqController.text) ?? 1;
+
+                    if (name.isEmpty || frequency < 1) return;
+
+                    taskProvider.editTask(
+                      plant.id,
+                      name,
+                      frequency,
+                      growthLevel.round(),
+                    );
+
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Save Changes'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
-
 
   // --- Helper: Delete Confirmation ---
   void _showDeleteConfirmation(BuildContext context, Task item, int index) {
     final theme = Theme.of(context);
-
 
     showDialog(
       context: context,
@@ -113,11 +139,9 @@ class TaskList extends StatelessWidget {
     );
   }
 
-
   // --- Helper: The Leading Emoji ---
   Widget _buildLeadingIcon(BuildContext context, Task item) {
     final theme = Theme.of(context);
-
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -129,12 +153,10 @@ class TaskList extends StatelessWidget {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
 
     if (tasks.isEmpty) {
       return Center(
@@ -158,7 +180,6 @@ class TaskList extends StatelessWidget {
       );
     }
 
-
     return Column(
       children: [
         // --- Progress Section ---
@@ -175,15 +196,10 @@ class TaskList extends StatelessWidget {
           ),
         ),
 
-
         // --- List Section ---
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.only(
-              left: 16,
-              right: 16,
-              bottom: 80,
-            ),
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
             itemCount: tasks.length,
             itemBuilder: (ctx, index) {
               final item = tasks[index];
@@ -209,9 +225,7 @@ class TaskList extends StatelessWidget {
                         // 1. LEFT: Plant Identity
                         _buildLeadingIcon(context, item),
 
-
                         const SizedBox(width: 16),
-
 
                         // 2. MIDDLE: Info
                         Expanded(
@@ -255,7 +269,6 @@ class TaskList extends StatelessWidget {
                           ),
                         ),
 
-
                         // 3. RIGHT: Action Buttons
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -265,14 +278,31 @@ class TaskList extends StatelessWidget {
                               onTap: item.isDone
                                   ? null
                                   : () {
+                                      final previousGrowthStage =
+                                          item.growthStage;
+
                                       onToggle(index, true);
+
+                                      final updatedGrowthStage =
+                                          item.growthStage;
+
+                                      SoundService.instance.playWater();
+
+                                      if (updatedGrowthStage >
+                                          previousGrowthStage) {
+                                        SoundService.instance.playGrowth();
+                                      }
+
                                       ScaffoldMessenger.of(
                                         context,
                                       ).hideCurrentSnackBar();
-                                      ScaffoldMessenger.of(context).showSnackBar(
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            "Watered ${item.name}! 🌱",
+                                            'Watered ${item.name}! 🌱',
                                             style: TextStyle(
                                               color: theme
                                                   .colorScheme
@@ -280,34 +310,30 @@ class TaskList extends StatelessWidget {
                                             ),
                                           ),
                                           duration: const Duration(seconds: 3),
-                                          behavior: SnackBarBehavior
-                                              .floating,
+                                          behavior: SnackBarBehavior.floating,
                                           dismissDirection:
                                               DismissDirection.horizontal,
-
-
                                           margin: const EdgeInsets.only(
                                             bottom: 90,
                                             left: 20,
                                             right: 20,
                                           ),
-
-
                                           backgroundColor: theme
                                               .colorScheme
                                               .surfaceContainerHighest,
-
-
                                           persist: false,
                                           action: SnackBarAction(
-                                            label: "UNDO",
-                                            textColor: theme.colorScheme.primary,
+                                            label: 'UNDO',
+                                            textColor:
+                                                theme.colorScheme.primary,
                                             onPressed: () {
-                                              final p = Provider.of<TaskProvider>(
-                                                context,
-                                                listen: false,
-                                              );
-                                              p.undoWatering(item.id);
+                                              final provider =
+                                                  Provider.of<TaskProvider>(
+                                                    context,
+                                                    listen: false,
+                                                  );
+
+                                              provider.undoWatering(item.id);
                                             },
                                           ),
                                         ),
@@ -318,19 +344,15 @@ class TaskList extends StatelessWidget {
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: item.isDone
-                                      ? colorScheme
-                                              .tertiaryContainer
-                                      : colorScheme
-                                              .secondaryContainer,
+                                      ? colorScheme.tertiaryContainer
+                                      : colorScheme.secondaryContainer,
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: item.isDone
                                       ? []
                                       : [
                                           BoxShadow(
                                             color: colorScheme.secondary
-                                                .withValues(
-                                                  alpha: 0.2,
-                                                ),
+                                                .withValues(alpha: 0.2),
                                             blurRadius: 8,
                                             offset: const Offset(0, 4),
                                           ),
@@ -341,19 +363,19 @@ class TaskList extends StatelessWidget {
                                       ? Icons.check_circle
                                       : Icons.water_drop,
                                   color: item.isDone
-                                      ? colorScheme
-                                              .onTertiaryContainer
-                                      : colorScheme
-                                              .onSecondaryContainer,
+                                      ? colorScheme.onTertiaryContainer
+                                      : colorScheme.onSecondaryContainer,
                                   size: 32,
                                 ),
                               ),
                             ),
 
-
                             // TRIPLE DOT MENU
                             PopupMenuButton<String>(
-                              icon: Icon(Icons.more_vert, color: theme.hintColor),
+                              icon: Icon(
+                                Icons.more_vert,
+                                color: theme.hintColor,
+                              ),
                               onSelected: (val) {
                                 if (val == 'edit') {
                                   _showEditPlantDialog(context, item);
