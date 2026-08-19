@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/plant_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/notification_service.dart';
+import '../screens/achievements_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -233,6 +234,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               final prefs = await SharedPreferences.getInstance();
               await prefs.setBool('soundsEnabled', value);
+            },
+          ),
+
+          ListTile(
+            leading: Icon(
+              Icons.emoji_events_outlined,
+              color: colorScheme.primary,
+            ),
+            title: const Text('Achievements'),
+            subtitle: const Text('Celebrate your garden milestones'),
+            trailing: Icon(Icons.chevron_right, color: theme.hintColor),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+              );
             },
           ),
 
