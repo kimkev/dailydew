@@ -265,57 +265,73 @@ class _GardenViewState extends State<GardenView> {
 
   List<Widget> _buildBackgroundDecor() {
     return [
-      // Horizontal riverbed across the middle of the garden.
+      // Larger pond in the upper-middle/right garden area.
       Positioned(
-        bottom: 22,
-        right: 20,
+        top: 74,
+        right: 18,
         child: Stack(
           alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
-            // Outer bank / rocks
+            // Outer bank / rocks.
             Container(
-              width: 112,
-              height: 78,
+              width: 156,
+              height: 108,
               decoration: BoxDecoration(
-                color: const Color(0xFF8C6B57).withValues(alpha: 0.40),
-                borderRadius: BorderRadius.circular(50),
+                color: const Color(0xFF8C6B57).withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(64),
               ),
             ),
 
-            // Pond water
+            // Pond water.
             Container(
-              width: 96,
-              height: 64,
+              width: 136,
+              height: 86,
               decoration: BoxDecoration(
-                color: const Color(0xFF83CDEA).withValues(alpha: 0.72),
-                borderRadius: BorderRadius.circular(45),
+                color: const Color(0xFF83CDEA).withValues(alpha: 0.76),
+                borderRadius: BorderRadius.circular(54),
                 border: Border.all(
-                  color: const Color(0xFF4AA8D0).withValues(alpha: 0.45),
+                  color: const Color(0xFF4AA8D0).withValues(alpha: 0.55),
                   width: 2,
                 ),
               ),
             ),
 
-            // Water ripples
-            const Text('〰️ 〰️', style: TextStyle(fontSize: 13)),
+            // Water ripples.
+            const Text('〰️  〰️', style: TextStyle(fontSize: 17)),
 
-            // Lily-pad / pond life accent
+            // Lily pad and rocks.
             const Positioned(
-              right: 15,
-              bottom: 10,
-              child: Text('🪷', style: TextStyle(fontSize: 16)),
-            ),
-
-            // Rocks overlap the pond edge.
-            const Positioned(
-              left: -7,
-              bottom: 4,
-              child: Text('🪨', style: TextStyle(fontSize: 18)),
+              right: 24,
+              bottom: 12,
+              child: Text('🪷', style: TextStyle(fontSize: 22)),
             ),
             const Positioned(
-              right: -6,
-              top: 4,
-              child: Text('🪨', style: TextStyle(fontSize: 16)),
+              left: -8,
+              bottom: 5,
+              child: Text('🪨', style: TextStyle(fontSize: 21)),
+            ),
+            const Positioned(
+              right: -8,
+              top: 6,
+              child: Text('🪨', style: TextStyle(fontSize: 19)),
+            ),
+
+            // Three birds sitting directly along the pond edge.
+            const Positioned(
+              left: 10,
+              top: -16,
+              child: Text('🐦', style: TextStyle(fontSize: 21)),
+            ),
+            const Positioned(
+              right: 20,
+              top: -18,
+              child: Text('🐦', style: TextStyle(fontSize: 19)),
+            ),
+            const Positioned(
+              left: -10,
+              bottom: 8,
+              child: Text('🐦', style: TextStyle(fontSize: 18)),
             ),
           ],
         ),
