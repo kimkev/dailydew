@@ -20,6 +20,8 @@ class PlantDetailScreen extends StatelessWidget {
       orElse: () => plant,
     );
 
+    final canWater = currentPlant.isThirsty;
+
     // Calculate days since last watered
     final daysSinceWatered = DateTime.now()
         .difference(currentPlant.lastCompleted)
@@ -54,7 +56,9 @@ class PlantDetailScreen extends StatelessWidget {
                 context,
                 icon: Icons.water_drop,
                 title: 'Last Watered',
-                value: currentPlant.isDone ? 'Today' : '$daysSinceWatered days ago',
+                value: daysSinceWatered == 0
+                    ? 'Today'
+                    : '$daysSinceWatered days ago',
                 subtitle: 'Water every ${currentPlant.frequencyInDays} days',
               ),
               const SizedBox(height: 16),
@@ -82,7 +86,8 @@ class PlantDetailScreen extends StatelessWidget {
                 icon: Icons.local_fire_department,
                 title: 'Current Streak',
                 value: '${currentPlant.currentStreak} 🔥',
-                subtitle: currentPlant.currentStreak > currentPlant.longestStreak
+                subtitle:
+                    currentPlant.currentStreak > currentPlant.longestStreak
                     ? 'New personal best!'
                     : 'Best: ${currentPlant.longestStreak}',
               ),
@@ -120,33 +125,32 @@ class PlantDetailScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: currentPlant.isDone
+                  onPressed: !canWater
                       ? null
                       : () {
                           final index = taskProvider.tasks.indexWhere(
                             (t) => t.id == currentPlant.id,
                           );
 
-                          if (index != -1) {
-                            taskProvider.toggleTask(index);
+                          if (index == -1) return;
 
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Watered ${currentPlant.name}! 🌱"),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          }
+                          taskProvider.toggleTask(index);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Watered ${currentPlant.name}! 🌱'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
                         },
-                  icon: Icon(
-                    currentPlant.isDone ? Icons.check_circle : Icons.water_drop,
-                  ),
-                  label: Text(currentPlant.isDone ? 'Already Watered' : 'Water Now'),
+                  icon: Icon(canWater ? Icons.water_drop : Icons.check_circle),
+                  label: Text(canWater ? 'Water Now' : 'Not Due Yet'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
+                    disabledBackgroundColor:
+                        colorScheme.surfaceContainerHighest,
+                    disabledForegroundColor: colorScheme.onSurfaceVariant,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

@@ -110,7 +110,7 @@ class TaskProvider extends ChangeNotifier {
     final wateredTasks = <Task>[];
 
     for (final task in _tasks) {
-      if (!task.isDone) {
+      if (task.isThirsty) {
         task.water();
         wateredTasks.add(task);
       }

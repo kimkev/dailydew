@@ -210,7 +210,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         name: name,
                         category: selectedPlantType,
                         frequencyInDays: frequency,
-                        lastCompleted: DateTime.now(),
+                        lastCompleted: DateTime.now().subtract(
+                          Duration(days: frequency),
+                        ),
                         growthLevel: startingGrowth,
                         dateAdded: dateAdded,
                         positionX: nextX.clamp(0.1, 0.9),
@@ -251,12 +253,12 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text('Hi, ${taskProvider.userName}! 🌱'),
         actions: [
           // Water All Button
-          if (taskProvider.tasks.any((t) => !t.isDone))
+          if (taskProvider.tasks.any((t) => t.isThirsty))
             TextButton.icon(
               onPressed: () async {
                 // Track which plants we're about to water
                 final thirstyPlantIds = taskProvider.tasks
-                    .where((t) => !t.isDone)
+                    .where((t) => t.isThirsty)
                     .map((t) => t.id)
                     .toList();
 

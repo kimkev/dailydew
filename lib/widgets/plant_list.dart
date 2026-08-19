@@ -203,6 +203,7 @@ class TaskList extends StatelessWidget {
             itemCount: tasks.length,
             itemBuilder: (ctx, index) {
               final item = tasks[index];
+              final canWater = item.isThirsty;
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: InkWell(
@@ -275,7 +276,7 @@ class TaskList extends StatelessWidget {
                           children: [
                             // WATERING BUTTON
                             GestureDetector(
-                              onTap: item.isDone
+                              onTap: !canWater
                                   ? null
                                   : () {
                                       final previousGrowthStage =
@@ -343,11 +344,11 @@ class TaskList extends StatelessWidget {
                                 duration: const Duration(milliseconds: 300),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: item.isDone
+                                  color: !canWater
                                       ? colorScheme.tertiaryContainer
                                       : colorScheme.secondaryContainer,
                                   borderRadius: BorderRadius.circular(16),
-                                  boxShadow: item.isDone
+                                  boxShadow: !canWater
                                       ? []
                                       : [
                                           BoxShadow(
@@ -359,10 +360,10 @@ class TaskList extends StatelessWidget {
                                         ],
                                 ),
                                 child: Icon(
-                                  item.isDone
+                                  !canWater
                                       ? Icons.check_circle
                                       : Icons.water_drop,
-                                  color: item.isDone
+                                  color: !canWater
                                       ? colorScheme.onTertiaryContainer
                                       : colorScheme.onSecondaryContainer,
                                   size: 32,
