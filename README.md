@@ -1,17 +1,58 @@
-# my_first_app
+# PlantSip
 
-A new Flutter project.
+**PlantSip – Your garden in your pocket: simple plant watering reminders.**
+
+PlantSip is a minimalistic, garden‑themed plant care tracker for Android. It helps you keep your houseplants healthy with custom watering schedules and gentle reminders, all inside a small, emoji‑driven virtual garden.
+
+## Features
+
+- Garden theme with emoji “plots”
+- Add, edit, and delete plants
+- Custom watering intervals per plant
+- Local notifications for watering reminders
+- Care history / log per plant
+- Fully offline; no accounts, no cloud, no ads
+
+## Tech Stack
+
+- **Framework**: Flutter (Dart)
+- **Architecture**: Custom reactive pattern using `SharedRef` (no external state management library)
+- **Local storage**: SQLite (via `sqflite`)
+- **Notifications**: `flutter_local_notifications`
+- **Platform**: Android
+
+## Screenshots
+
+- Garden view with emoji plants  
+- Add/edit plant screen  
+- Plant detail with watering schedule  
+- Care history / log view  
+- Settings / reminders overview
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK (latest stable)
+- Android Studio / Android SDK
+- A physical Android device or emulator
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Installation
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+git clone https://github.com/kimkev/plant_sip.git
+cd plant_sip
+flutter pub get
+flutter run
+```
+
+## Privacy
+
+PlantSip does not collect, store, or transmit personal data to external servers. All plant and care data is stored locally on your device. The app does not use third‑party analytics or advertising SDKs.
+
+Privacy policy:  
+https://kimkev.github.io/privacypolicies/privacy-plantsip.html
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
