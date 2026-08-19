@@ -166,11 +166,11 @@ class _GardenViewState extends State<GardenView> {
                                               )
                                             : isThirsty
                                             ? const Color(
-                                                0xFF4E342E,
-                                              ) // Dark, moist soil
-                                            : const Color(
                                                 0xFF9A7058,
-                                              ), // Light, dry soil
+                                              ) // light, dry soil
+                                            : const Color(
+                                                0xFF4E342E,
+                                              ), // dark, moist soil
                                         borderRadius: BorderRadius.circular(30),
                                         border: isSelected
                                             ? Border.all(
