@@ -21,7 +21,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => TaskProvider()),
+        ChangeNotifierProvider(create: (_) => PlantProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: MyApp(seenOnboarding: seenOnboarding),

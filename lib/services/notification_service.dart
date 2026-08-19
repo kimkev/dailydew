@@ -117,6 +117,7 @@ class NotificationService {
             'Plant Care Reminders',
             importance: Importance.max,
             priority: Priority.high,
+            icon: '@drawable/ic_water_drop',
             // --- ADD THESE TWO LINES FOR ANDROID ---
             groupKey: 'com.kimkev.plant_tracker.WATER_GROUP',
             setAsGroupSummary:
@@ -178,6 +179,7 @@ class NotificationService {
             'Plant Care Reminders',
             importance: Importance.max,
             priority: Priority.high,
+            icon: '@drawable/ic_water_drop',
           ),
           iOS: DarwinNotificationDetails(
             threadIdentifier: 'plant_reminders_group',
@@ -236,6 +238,7 @@ class NotificationService {
             'Plant Care Reminders',
             importance: Importance.max,
             priority: Priority.high,
+            icon: '@drawable/ic_water_drop',
           ),
           iOS: DarwinNotificationDetails(
             threadIdentifier: 'plant_reminders_group',

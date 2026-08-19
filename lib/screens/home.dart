@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String selectedPlantType = 'Flower';
     String selectedAgeOption = 'new';
 
-    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+    final plantProvider = Provider.of<PlantProvider>(context, listen: false);
 
     showDialog(
       context: context,
@@ -177,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
 
                     // Calculate position: 3 columns, auto-place from top to bottom
-                    final existingTasks = taskProvider.tasks;
+                    final existingPlants = plantProvider.plants;
                     // 3 columns × 3 rows.
                     // The bottom-right corner is intentionally left open for the pond.
                     const xPositions = [0.22, 0.50, 0.76];
@@ -195,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       7, // bottom-center
                     ];
 
-                    final plantNumber = existingTasks.length;
+                    final plantNumber = existingPlants.length;
                     final slot = usableSlots[plantNumber % usableSlots.length];
 
                     final column = slot % 3;
@@ -204,8 +204,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     final nextX = xPositions[column];
                     final nextY = yPositions[row];
 
-                    await taskProvider.addTask(
-                      Task(
+                    await plantProvider.addPlant(
+                      Plant(
                         id: DateTime.now().toString(),
                         name: name,
                         category: selectedPlantType,
@@ -237,35 +237,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final taskProvider = Provider.of<TaskProvider>(context);
+    final plantProvider = Provider.of<PlantProvider>(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     // Calculate progress using data from the provider
-    int completedCount = taskProvider.tasks.where((t) => t.isDone).length;
-    double progress = taskProvider.tasks.isEmpty
+    int completedCount = plantProvider.plants.where((t) => t.isDone).length;
+    double progress = plantProvider.plants.isEmpty
         ? 0
-        : completedCount / taskProvider.tasks.length;
+        : completedCount / plantProvider.plants.length;
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('Hi, ${taskProvider.userName}! 🌱'),
+        title: Text('Hi, ${plantProvider.userName}! 🌱'),
         actions: [
           // Water All Button
-          if (taskProvider.tasks.any((t) => t.isThirsty))
+          if (plantProvider.plants.any(plantProvider.isPlantThirsty))
             TextButton.icon(
               onPressed: () async {
                 // Track which plants we're about to water
-                final thirstyPlantIds = taskProvider.tasks
-                    .where((t) => t.isThirsty)
-                    .map((t) => t.id)
+                final thirstyPlantIds = plantProvider.plants
+                    .where(plantProvider.isPlantThirsty)
+                    .map((plant) => plant.id)
                     .toList();
 
                 final thirstyCount = thirstyPlantIds.length;
 
                 // Water all thirsty plants
-                await taskProvider.waterAll();
+                await plantProvider.waterAll();
                 await SoundService.instance.playWaterAll();
                 if (!context.mounted) return;
 
@@ -290,12 +290,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: "UNDO",
                       textColor: colorScheme.primary,
                       onPressed: () {
-                        final p = Provider.of<TaskProvider>(
+                        final p = Provider.of<PlantProvider>(
                           context,
                           listen: false,
                         );
-                        for (var taskId in thirstyPlantIds) {
-                          p.undoWatering(taskId);
+                        for (var plantId in thirstyPlantIds) {
+                          p.undoPlantWatering(plantId);
                         }
                       },
                     ),
@@ -325,17 +325,17 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       body: _selectedIndex == 0
-          ? TaskList(
-              tasks: taskProvider.tasks,
+          ? PlantList(
+              plants: plantProvider.plants,
               progress: progress,
-              onDelete: (index) => taskProvider.deleteTask(index),
+              onDelete: (index) => plantProvider.deletePlant(index),
               onToggle: (index, isChecked) {
-                taskProvider.toggleTask(index);
+                plantProvider.togglePlant(index);
                 if (isChecked) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        "${taskProvider.tasks[index].name} grew! 🌱",
+                        "${plantProvider.plants[index].name} grew! 🌱",
                       ),
                       duration: const Duration(seconds: 1),
                     ),
@@ -360,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // Only show the button if _selectedIndex is 0 (the Tasks tab)
+      // Only show the button if _selectedIndex is 0 (the plants tab)
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton.extended(
               onPressed: _showAddPlantDialog,

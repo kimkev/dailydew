@@ -109,7 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               String newName = nameController.text.trim();
               if (newName.isNotEmpty) {
-                Provider.of<TaskProvider>(
+                Provider.of<PlantProvider>(
                   context,
                   listen: false,
                 ).updateUserName(newName);
@@ -141,10 +141,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     setState(() => _reminderTime = picked);
 
-    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
-
-    final thirstyPlantNames = taskProvider.tasks
-        .where((plant) => !plant.isDone)
+    final plantProvider = Provider.of<PlantProvider>(context, listen: false);
+    final thirstyPlantNames = plantProvider.plants
+        .where(plantProvider.isPlantThirsty)
         .map((plant) => plant.name)
         .toList();
 

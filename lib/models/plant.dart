@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-class Task {
+class Plant {
   final String id;
   String name;
   bool isDone;
@@ -15,7 +15,7 @@ class Task {
   int currentStreak; // ← ADD THIS
   int longestStreak; // ← ADD THIS
 
-  Task({
+  Plant({
     required this.id,
     required this.name,
     this.isDone = false,
@@ -31,24 +31,26 @@ class Task {
     this.longestStreak = 0, // ← DEFAULT
   }) : dateAdded = dateAdded ?? DateTime.now();
 
-  // This check ignores the specific time and only cares about calendar dates
-  bool get isThirsty {
-    // 1. Get today's date at midnight (00:00:00)
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+  bool isThirstyAt({
+    required DateTime now,
+    required int reminderHour,
+    required int reminderMinute,
+  }) {
+    final minimumDueTime = lastCompleted.add(Duration(days: frequencyInDays));
 
-    // 2. Get the date it was last completed at midnight
-    final lastDate = DateTime(
-      lastCompleted.year,
-      lastCompleted.month,
-      lastCompleted.day,
+    final scheduledToday = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      reminderHour,
+      reminderMinute,
     );
 
-    // 3. Calculate the difference in days
-    final daysSinceLast = today.difference(lastDate).inDays;
+    if (now.isBefore(minimumDueTime)) {
+      return false;
+    }
 
-    // It's "thirsty" if the days passed is greater or equal to frequency
-    return daysSinceLast >= frequencyInDays;
+    return !now.isBefore(scheduledToday);
   }
 
   int get growthStage => (growthLevel.clamp(0, 99) ~/ 10);
@@ -213,8 +215,8 @@ class Task {
   }
 
   // Create from Map
-  factory Task.fromMap(Map<String, dynamic> map) {
-    return Task(
+  factory Plant.fromMap(Map<String, dynamic> map) {
+    return Plant(
       id: map['id'],
       name: map['name'],
       isDone: map['isDone'],
@@ -239,14 +241,14 @@ class Task {
     );
   }
 
-  // 3. Stringify: Turns a List of Tasks into a single String
-  static String encode(List<Task> tasks) => json.encode(
-    tasks.map<Map<String, dynamic>>((task) => task.toMap()).toList(),
+  // 3. Stringify: Turns a List of Plants into a single String
+  static String encode(List<Plant> plants) => json.encode(
+    plants.map<Map<String, dynamic>>((plant) => plant.toMap()).toList(),
   );
 
-  // 4. Parse: Turns a String back into a List of Tasks
-  static List<Task> decode(String tasks) =>
-      (json.decode(tasks) as List<dynamic>)
-          .map<Task>((item) => Task.fromMap(item))
+  // 4. Parse: Turns a String back into a List of Plants
+  static List<Plant> decode(String plants) =>
+      (json.decode(plants) as List<dynamic>)
+          .map<Plant>((item) => Plant.fromMap(item))
           .toList();
 }

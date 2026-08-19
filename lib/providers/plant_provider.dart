@@ -1,72 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/notification_service.dart';
+
 import '../models/plant.dart';
+import '../services/notification_service.dart';
 
-class TaskProvider extends ChangeNotifier {
-  List<Task> _tasks = [];
-  String? _selectedTaskId;
-  String _userName = "Gardener";
+class PlantProvider extends ChangeNotifier {
+  List<Plant> _plants = [];
+  String? _selectedPlantId;
+  String _userName = 'Gardener';
+
+  int _reminderHour = 9;
+  int _reminderMinute = 0;
+
+  int get reminderHour => _reminderHour;
+  int get reminderMinute => _reminderMinute;
+
   String get userName => _userName;
-  // Getter to see tasks from the outside
-  List<Task> get tasks => _tasks;
-  String? get selectedTaskId => _selectedTaskId;
+  List<Plant> get plants => _plants;
+  String? get selectedPlantId => _selectedPlantId;
 
-  // Initialize and Load
-  TaskProvider() {
-    loadTasks();
+  PlantProvider() {
+    loadPlants();
   }
 
-  void selectTask(String? id) {
-    _selectedTaskId = id;
+  void selectPlant(String? id) {
+    _selectedPlantId = id;
     notifyListeners();
   }
 
-  Future<void> loadTasks() async {
+  Future<void> loadPlants() async {
     final prefs = await SharedPreferences.getInstance();
-    _userName = prefs.getString('userName') ?? "Gardener";
-    final String? tasksString = prefs.getString('saved_tasks');
 
-    if (tasksString != null) {
-      // Step A: Decode the string into a list of Tasks
-      _tasks = Task.decode(tasksString);
+    _reminderHour = prefs.getInt('reminderHour') ?? 9;
+    _reminderMinute = prefs.getInt('reminderMinute') ?? 0;
+    _userName = prefs.getString('userName') ?? 'Gardener';
 
-      // Step B: The "Smart Reset" logic
-      // We loop through every task we just loaded
-      for (var task in _tasks) {
-        // If the calculated 'isThirsty' is true, reset the checkmark
-        if (task.isThirsty) {
-          task.isDone = false;
+    final savedPlants = prefs.getString('saved_tasks');
+
+    if (savedPlants != null) {
+      _plants = Plant.decode(savedPlants);
+
+      for (final plant in _plants) {
+        if (isPlantThirsty(plant)) {
+          plant.isDone = false;
         }
       }
     }
 
-    // Step C: Tell the UI that we have fresh data
     notifyListeners();
   }
 
-  //  Save Logic
-  Future<void> _saveTasks() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('saved_tasks', Task.encode(_tasks));
+  bool isPlantThirsty(Plant plant) {
+    return plant.isThirstyAt(
+      now: DateTime.now(),
+      reminderHour: _reminderHour,
+      reminderMinute: _reminderMinute,
+    );
   }
 
-  // Action: Add
-  Future<void> addTask(Task task) async {
-    _tasks.add(task);
+  Future<void> _savePlants() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('saved_tasks', Plant.encode(_plants));
+  }
 
-    await _saveTasks();
+  Future<void> addPlant(Plant plant) async {
+    _plants.add(plant);
+
+    await _savePlants();
 
     final notificationsEnabled = await NotificationService()
         .areNotificationsEnabled();
 
-    if (notificationsEnabled && !task.isDone) {
-      final thirstyPlantNames = _tasks
-          .where((plant) => !plant.isDone)
+    if (notificationsEnabled && !plant.isDone) {
+      final thirstyPlantNames = _plants
+          .where(isPlantThirsty)
           .map((plant) => plant.name)
           .toList();
 
-      await NotificationService().scheduleReminderForCurrentlyThirstyPlants(
+      await NotificationService()
+          .scheduleReminderForCurrentlyThirstyPlants(
         plantNames: thirstyPlantNames,
       );
     }
@@ -74,142 +86,165 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  //  Action: Toggle/Growth
-  Future<void> toggleTask(int index) async {
-    final task = _tasks[index];
+  Future<void> togglePlant(int index) async {
+    final plant = _plants[index];
 
-    if (task.isDone) {
-      task.unwater();
+    if (plant.isDone) {
+      plant.unwater();
     } else {
-      task.water();
+      plant.water();
 
       final notificationsEnabled = await NotificationService()
           .areNotificationsEnabled();
 
       if (notificationsEnabled) {
         await NotificationService().scheduleWateringSummary(
-          plantNames: [task.name],
-          days: task.frequencyInDays,
+          plantNames: [plant.name],
+          days: plant.frequencyInDays,
         );
       }
     }
 
-    await _saveTasks();
+    await _savePlants();
     notifyListeners();
   }
 
-  //  Action: Delete
-  void deleteTask(int index) {
-    _tasks.removeAt(index);
-    _saveTasks();
+  void deletePlant(int index) {
+    _plants.removeAt(index);
+    _savePlants();
     notifyListeners();
   }
 
-  // Action: Water All Plants
-  Future<void> waterAll() async {
-    final wateredTasks = <Task>[];
+  Future<void> waterAllPlants() async {
+    final wateredPlants = <Plant>[];
 
-    for (final task in _tasks) {
-      if (task.isThirsty) {
-        task.water();
-        wateredTasks.add(task);
+    for (final plant in _plants) {
+      if (isPlantThirsty(plant)) {
+        plant.water();
+        wateredPlants.add(plant);
       }
     }
 
-    if (wateredTasks.isNotEmpty) {
+    if (wateredPlants.isNotEmpty) {
       final notificationsEnabled = await NotificationService()
           .areNotificationsEnabled();
 
       if (notificationsEnabled) {
-        final shortestFrequency = wateredTasks
-            .map((task) => task.frequencyInDays)
+        final shortestFrequency = wateredPlants
+            .map((plant) => plant.frequencyInDays)
             .reduce((a, b) => a < b ? a : b);
 
         await NotificationService().scheduleWateringSummary(
-          plantNames: wateredTasks.map((task) => task.name).toList(),
+          plantNames: wateredPlants.map((plant) => plant.name).toList(),
           days: shortestFrequency,
         );
       }
     }
 
-    await _saveTasks();
+    await _savePlants();
     notifyListeners();
   }
 
-  // Action: Edit an existing plant
+  void editPlant(
+    String id,
+    String newName,
+    int newFrequency,
+    int newGrowthLevel,
+  ) {
+    final index = _plants.indexWhere((plant) => plant.id == id);
+
+    if (index == -1) return;
+
+    _plants[index].name = newName;
+    _plants[index].frequencyInDays = newFrequency;
+    _plants[index].growthLevel = newGrowthLevel.clamp(0, 100);
+
+    _savePlants();
+    notifyListeners();
+  }
+
+  void updatePlantPosition(String id, double x, double y) {
+    final index = _plants.indexWhere((plant) => plant.id == id);
+
+    if (index != -1) {
+      _plants[index].positionX = x;
+      _plants[index].positionY = y;
+
+      _savePlants();
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateUserName(String newName) async {
+    _userName = newName;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', newName);
+
+    notifyListeners();
+  }
+
+  void movePlant(String id, double x, double y) {
+    final index = _plants.indexWhere((plant) => plant.id == id);
+
+    if (index != -1) {
+      final clampedX = x.clamp(0.05, 0.95);
+      final clampedY = y.clamp(0.03, 0.92);
+
+      if (_plants[index].positionX != clampedX ||
+          _plants[index].positionY != clampedY) {
+        _plants[index].positionX = clampedX;
+        _plants[index].positionY = clampedY;
+
+        notifyListeners();
+      }
+    }
+  }
+
+  void savePositions() {
+    _savePlants();
+  }
+
+  void undoPlantWatering(String id) {
+    final index = _plants.indexWhere((plant) => plant.id == id);
+
+    if (index != -1) {
+      _plants[index].unwater();
+
+      _savePlants();
+      notifyListeners();
+    }
+  }
+
+  // Temporary compatibility methods for existing UI files.
+  // We will remove these after refactoring the other files.
+
+  Future<void> addTask(Plant plant) => addPlant(plant);
+
+  Future<void> toggleTask(int index) => togglePlant(index);
+
+  void deleteTask(int index) => deletePlant(index);
+
+  Future<void> waterAll() => waterAllPlants();
+
   void editTask(
     String id,
     String newName,
     int newFrequency,
     int newGrowthLevel,
   ) {
-    final index = _tasks.indexWhere((t) => t.id == id);
-
-    if (index == -1) return;
-
-    _tasks[index].name = newName;
-    _tasks[index].frequencyInDays = newFrequency;
-    _tasks[index].growthLevel = newGrowthLevel.clamp(0, 100);
-
-    _saveTasks();
-    notifyListeners();
+    editPlant(id, newName, newFrequency, newGrowthLevel);
   }
 
-  // garden position
   void updateTaskPosition(String id, double x, double y) {
-    final index = _tasks.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      _tasks[index].positionX = x;
-      _tasks[index].positionY = y;
-      _saveTasks();
-      notifyListeners();
-    }
+    updatePlantPosition(id, x, y);
   }
 
-  // Update the user name and save to disk
-  Future<void> updateUserName(String newName) async {
-    _userName = newName;
-
-    // Save to SharedPreferences so it persists after restart
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userName', newName);
-
-    // Tell all listening widgets (like HomeScreen) to rebuild
-    notifyListeners();
-  }
-
-  // Update position in real-time (smooth)
   void moveTask(String id, double x, double y) {
-    final index = _tasks.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      // 1. Horizontal Clamping (0.05 is ~5% from the fence)
-      double clampedX = x.clamp(0.05, 0.95);
-      // 2. Vertical Clamping
-      // 0.03 (Top) allows the plant to sit much closer to the top fence
-      // 0.92 (Bottom) leaves a tiny bit of extra room for the name label
-      double clampedY = y.clamp(0.03, 0.92);
-
-      // 2. ONLY update and notify if the position is actually different
-      if (_tasks[index].positionX != clampedX ||
-          _tasks[index].positionY != clampedY) {
-        _tasks[index].positionX = clampedX;
-        _tasks[index].positionY = clampedY;
-        notifyListeners(); // The "broadcast" to the UI
-      }
-    }
-  }
-
-  // Save the final position to disk (only called when finger lifts up)
-  void savePositions() {
-    _saveTasks();
+    movePlant(id, x, y);
   }
 
   void undoWatering(String id) {
-    final index = _tasks.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      _tasks[index].unwater();
-      _saveTasks();
-      notifyListeners();
-    }
+    undoPlantWatering(id);
   }
 }

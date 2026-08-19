@@ -10,20 +10,20 @@ class AchievementsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final tasks = context.watch<TaskProvider>().tasks;
+    final plants = context.watch<PlantProvider>().plants;
 
-    final totalWaterings = tasks.fold<int>(
+    final totalWaterings = plants.fold<int>(
       0,
       (total, plant) => total + plant.totalCompletions,
     );
 
-    final highestStreak = tasks.fold<int>(
+    final highestStreak = plants.fold<int>(
       0,
       (highest, plant) =>
           plant.longestStreak > highest ? plant.longestStreak : highest,
     );
 
-    final highestGrowth = tasks.fold<int>(
+    final highestGrowth = plants.fold<int>(
       0,
       (highest, plant) =>
           plant.growthLevel > highest ? plant.growthLevel : highest,
@@ -99,24 +99,24 @@ class AchievementsScreen extends StatelessWidget {
         icon: '🌱',
         title: 'First Seedling',
         description: 'Add your first plant to the garden.',
-        unlocked: tasks.isNotEmpty,
-        progress: tasks.length,
+        unlocked: plants.isNotEmpty,
+        progress: plants.length,
         target: 1,
       ),
       _Achievement(
         icon: '🌿',
         title: 'Garden Growing',
         description: 'Add 5 plants to your garden.',
-        unlocked: tasks.length >= 5,
-        progress: tasks.length,
+        unlocked: plants.length >= 5,
+        progress: plants.length,
         target: 5,
       ),
       _Achievement(
         icon: '🏡',
         title: 'Garden Keeper',
         description: 'Add 10 plants to your garden.',
-        unlocked: tasks.length >= 10,
-        progress: tasks.length,
+        unlocked: plants.length >= 10,
+        progress: plants.length,
         target: 10,
       ),
       _Achievement(

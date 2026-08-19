@@ -5,28 +5,28 @@ import '../providers/plant_provider.dart';
 import '../screens/plant_detail_screen.dart';
 import '../services/sound_service.dart';
 
-class TaskList extends StatelessWidget {
-  final List<Task> tasks;
+class PlantList extends StatelessWidget {
+  final List<Plant> plants;
   final double progress;
   final Function(int) onDelete;
   final Function(int, bool) onToggle;
 
-  const TaskList({
+  const PlantList({
     super.key,
-    required this.tasks,
+    required this.plants,
     required this.progress,
     required this.onDelete,
     required this.onToggle,
   });
 
   // --- Helper: Edit Dialog ---
-  void _showEditPlantDialog(BuildContext context, Task plant) {
+  void _showEditPlantDialog(BuildContext context, Plant plant) {
     final nameController = TextEditingController(text: plant.name);
     final freqController = TextEditingController(
       text: plant.frequencyInDays.toString(),
     );
 
-    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+    final plantProvider = Provider.of<PlantProvider>(context, listen: false);
 
     double growthLevel = plant.growthLevel.toDouble();
 
@@ -88,7 +88,7 @@ class TaskList extends StatelessWidget {
 
                     if (name.isEmpty || frequency < 1) return;
 
-                    taskProvider.editTask(
+                    plantProvider.editPlant(
                       plant.id,
                       name,
                       frequency,
@@ -108,7 +108,7 @@ class TaskList extends StatelessWidget {
   }
 
   // --- Helper: Delete Confirmation ---
-  void _showDeleteConfirmation(BuildContext context, Task item, int index) {
+  void _showDeleteConfirmation(BuildContext context, Plant item, int index) {
     final theme = Theme.of(context);
 
     showDialog(
@@ -140,7 +140,7 @@ class TaskList extends StatelessWidget {
   }
 
   // --- Helper: The Leading Emoji ---
-  Widget _buildLeadingIcon(BuildContext context, Task item) {
+  Widget _buildLeadingIcon(BuildContext context, Plant item) {
     final theme = Theme.of(context);
 
     return Container(
@@ -158,7 +158,7 @@ class TaskList extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    if (tasks.isEmpty) {
+    if (plants.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -200,10 +200,14 @@ class TaskList extends StatelessWidget {
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
-            itemCount: tasks.length,
+            itemCount: plants.length,
             itemBuilder: (ctx, index) {
-              final item = tasks[index];
-              final canWater = item.isThirsty;
+              final item = plants[index];
+              final plantProvider = Provider.of<PlantProvider>(
+                context,
+                listen: false,
+              );
+              final canWater = plantProvider.isPlantThirsty(item);
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: InkWell(
@@ -329,12 +333,14 @@ class TaskList extends StatelessWidget {
                                                 theme.colorScheme.primary,
                                             onPressed: () {
                                               final provider =
-                                                  Provider.of<TaskProvider>(
+                                                  Provider.of<PlantProvider>(
                                                     context,
                                                     listen: false,
                                                   );
 
-                                              provider.undoWatering(item.id);
+                                              provider.undoPlantWatering(
+                                                item.id,
+                                              );
                                             },
                                           ),
                                         ),

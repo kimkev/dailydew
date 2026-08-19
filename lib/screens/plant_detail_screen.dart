@@ -4,7 +4,7 @@ import '../models/plant.dart';
 import '../providers/plant_provider.dart';
 
 class PlantDetailScreen extends StatelessWidget {
-  final Task plant;
+  final Plant plant;
 
   const PlantDetailScreen({super.key, required this.plant});
 
@@ -12,15 +12,15 @@ class PlantDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final taskProvider = Provider.of<TaskProvider>(context);
+    final plantProvider = Provider.of<PlantProvider>(context);
 
     // Find the latest plant data from provider
-    final currentPlant = taskProvider.tasks.firstWhere(
+    final currentPlant = plantProvider.plants.firstWhere(
       (t) => t.id == plant.id,
       orElse: () => plant,
     );
 
-    final canWater = currentPlant.isThirsty;
+    final canWater = plantProvider.isPlantThirsty(currentPlant);
 
     // Calculate days since last watered
     final daysSinceWatered = DateTime.now()
@@ -128,13 +128,13 @@ class PlantDetailScreen extends StatelessWidget {
                   onPressed: !canWater
                       ? null
                       : () {
-                          final index = taskProvider.tasks.indexWhere(
+                          final index = plantProvider.plants.indexWhere(
                             (t) => t.id == currentPlant.id,
                           );
 
                           if (index == -1) return;
 
-                          taskProvider.toggleTask(index);
+                          plantProvider.togglePlant(index);
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

@@ -23,14 +23,14 @@ class _GardenViewState extends State<GardenView> {
     });
   }
 
-  String _getGrowthEmoji(Task plant) {
+  String _getGrowthEmoji(Plant plant) {
     return plant.emoji;
   }
 
   @override
   Widget build(BuildContext context) {
-    final taskProvider = Provider.of<TaskProvider>(context);
-    final tasks = taskProvider.tasks;
+    final plantProvider = Provider.of<PlantProvider>(context);
+    final plants = plantProvider.plants;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -66,7 +66,7 @@ class _GardenViewState extends State<GardenView> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${tasks.length} ${tasks.length == 1 ? 'plant' : 'plants'}',
+                    '${plants.length} ${plants.length == 1 ? 'plant' : 'plants'}',
                     style: TextStyle(
                       color: colorScheme.onPrimaryContainer,
                       fontSize: 12,
@@ -110,18 +110,18 @@ class _GardenViewState extends State<GardenView> {
                     children: [
                       ..._buildBackgroundDecor(),
 
-                      ...tasks.map((plant) {
+                      ...plants.map((plant) {
                         final x = plant.positionX ?? 0.5;
                         final y = plant.positionY ?? 0.5;
                         final isSelected =
-                            taskProvider.selectedTaskId == plant.id;
+                            plantProvider.selectedPlantId == plant.id;
 
                         return Positioned(
                           left: x * availableWidth - 40,
                           top: y * availableHeight - 40,
                           child: GestureDetector(
                             onPanStart: (_) {
-                              taskProvider.selectTask(plant.id);
+                              plantProvider.selectPlant(plant.id);
                               HapticFeedback.lightImpact();
                             },
                             onPanUpdate: (details) {
@@ -132,14 +132,16 @@ class _GardenViewState extends State<GardenView> {
                                 details.globalPosition,
                               );
 
-                              final newX = localOffset.dx / availableWidth;
-                              final newY = localOffset.dy / availableHeight;
+                              final double newX =
+                                  localOffset.dx / availableWidth;
+                              final double newY =
+                                  localOffset.dy / availableHeight;
 
-                              taskProvider.moveTask(plant.id, newX, newY);
+                              plantProvider.movePlant(plant.id, newX, newY);
                             },
                             onPanEnd: (_) {
-                              taskProvider.savePositions();
-                              taskProvider.selectTask(null);
+                              plantProvider.savePositions();
+                              plantProvider.selectPlant(null);
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -225,7 +227,7 @@ class _GardenViewState extends State<GardenView> {
                         );
                       }),
 
-                      if (tasks.isEmpty)
+                      if (plants.isEmpty)
                         Positioned.fill(
                           child: Center(
                             child: Column(
