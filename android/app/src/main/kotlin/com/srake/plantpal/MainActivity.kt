@@ -1,4 +1,4 @@
-package com.srake.plantpal
+package com.kimkev.plantpal
 
 import io.flutter.embedding.android.FlutterActivity
 
