@@ -117,7 +117,6 @@ class NotificationService {
             'Plant Care Reminders',
             importance: Importance.max,
             priority: Priority.high,
-            icon: '@drawable/ic_water_drop',
             // --- ADD THESE TWO LINES FOR ANDROID ---
             groupKey: 'com.kimkev.plant_tracker.WATER_GROUP',
             setAsGroupSummary:
@@ -179,7 +178,6 @@ class NotificationService {
             'Plant Care Reminders',
             importance: Importance.max,
             priority: Priority.high,
-            icon: '@drawable/ic_water_drop',
           ),
           iOS: DarwinNotificationDetails(
             threadIdentifier: 'plant_reminders_group',
@@ -195,8 +193,9 @@ class NotificationService {
   Future<void> scheduleReminderForCurrentlyThirstyPlants({
     required List<String> plantNames,
   }) async {
-    if (plantNames.isEmpty) return;
-
+    if (plantNames.isEmpty) {
+      return;
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
       final hour = prefs.getInt('reminderHour') ?? 9;
@@ -238,7 +237,6 @@ class NotificationService {
             'Plant Care Reminders',
             importance: Importance.max,
             priority: Priority.high,
-            icon: '@drawable/ic_water_drop',
           ),
           iOS: DarwinNotificationDetails(
             threadIdentifier: 'plant_reminders_group',
@@ -276,5 +274,13 @@ class NotificationService {
       body: body,
       notificationDetails: details,
     );
+  }
+
+  Future<void> cancelAllNotifications() async {
+    await _notificationsPlugin.cancelAll();
+  }
+
+  Future<void> cancelNotification(int id) async {
+    await _notificationsPlugin.cancel(id: id);
   }
 }

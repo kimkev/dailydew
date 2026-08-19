@@ -3,7 +3,6 @@ import 'dart:convert';
 class Plant {
   final String id;
   String name;
-  bool isDone;
   String category; // Plant type: Flower, Houseplant, Cactus, or Tree
   int frequencyInDays; // e.g., 1 for daily, 7 for weekly
   DateTime lastCompleted;
@@ -12,23 +11,22 @@ class Plant {
   int totalCompletions;
   double? positionX; // 0.0 to 1.0
   double? positionY; // 0.0 to 1.0
-  int currentStreak; // ← ADD THIS
-  int longestStreak; // ← ADD THIS
+  int currentStreak;
+  int longestStreak;
 
   Plant({
     required this.id,
     required this.name,
-    this.isDone = false,
     this.category = 'Flower',
     this.frequencyInDays = 1,
     required this.lastCompleted,
     DateTime? dateAdded,
-    this.growthLevel = 0, // Starts at 0
+    this.growthLevel = 0,
     this.totalCompletions = 0,
     this.positionX,
     this.positionY,
-    this.currentStreak = 0, // ← DEFAULT
-    this.longestStreak = 0, // ← DEFAULT
+    this.currentStreak = 0,
+    this.longestStreak = 0,
   }) : dateAdded = dateAdded ?? DateTime.now();
 
   bool isThirstyAt({
@@ -38,19 +36,12 @@ class Plant {
   }) {
     final minimumDueTime = lastCompleted.add(Duration(days: frequencyInDays));
 
-    final scheduledToday = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      reminderHour,
-      reminderMinute,
-    );
-
     if (now.isBefore(minimumDueTime)) {
       return false;
     }
 
-    return !now.isBefore(scheduledToday);
+    // Once due, always considered thirsty (ignoring daily reminder time)
+    return true;
   }
 
   int get growthStage => (growthLevel.clamp(0, 99) ~/ 10);
@@ -156,7 +147,6 @@ class Plant {
 
     growthLevel = (growthLevel + progression).clamp(0, 99);
     lastCompleted = now;
-    isDone = true;
     totalCompletions++;
 
     final daysSinceLast = now.difference(previousLastCompleted).inDays;
@@ -186,7 +176,6 @@ class Plant {
     }
 
     growthLevel = (growthLevel - progression).clamp(0, 99);
-    isDone = false;
     totalCompletions--;
 
     // Revert streak
@@ -200,7 +189,6 @@ class Plant {
     return {
       'id': id,
       'name': name,
-      'isDone': isDone,
       'category': category,
       'frequencyInDays': frequencyInDays,
       'lastCompleted': lastCompleted.toIso8601String(),
@@ -209,8 +197,8 @@ class Plant {
       'totalCompletions': totalCompletions,
       'positionX': positionX,
       'positionY': positionY,
-      'currentStreak': currentStreak, // ← ADD THIS
-      'longestStreak': longestStreak, // ← ADD THIS
+      'currentStreak': currentStreak,
+      'longestStreak': longestStreak,
     };
   }
 
@@ -219,12 +207,11 @@ class Plant {
     return Plant(
       id: map['id'],
       name: map['name'],
-      isDone: map['isDone'],
       category: map['category'] ?? 'Flower',
       frequencyInDays: map['frequencyInDays'] ?? 1,
       lastCompleted: map['lastCompleted'] != null
           ? DateTime.parse(map['lastCompleted'])
-          : DateTime.now(), // If missing, just use "now"
+          : DateTime.now().subtract(const Duration(days: 365)),
       dateAdded: map['dateAdded'] != null
           ? DateTime.parse(map['dateAdded'])
           : DateTime.now(),
@@ -236,17 +223,16 @@ class Plant {
       positionY: map['positionY'] != null
           ? (map['positionY'] as num).toDouble()
           : null,
-      currentStreak: map['currentStreak'] ?? 0, // ← ADD THIS
-      longestStreak: map['longestStreak'] ?? 0, // ← ADD THIS
+      currentStreak: map['currentStreak'] ?? 0,
+      longestStreak: map['longestStreak'] ?? 0,
     );
   }
 
-  // 3. Stringify: Turns a List of Plants into a single String
+  // Stringify / Parse
   static String encode(List<Plant> plants) => json.encode(
     plants.map<Map<String, dynamic>>((plant) => plant.toMap()).toList(),
   );
 
-  // 4. Parse: Turns a String back into a List of Plants
   static List<Plant> decode(String plants) =>
       (json.decode(plants) as List<dynamic>)
           .map<Plant>((item) => Plant.fromMap(item))

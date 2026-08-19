@@ -142,38 +142,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _reminderTime = picked);
 
     final plantProvider = Provider.of<PlantProvider>(context, listen: false);
-    final thirstyPlantNames = plantProvider.plants
-        .where(plantProvider.isPlantThirsty)
-        .map((plant) => plant.name)
-        .toList();
+    await plantProvider.loadPlants();
 
-    if (_notificationsEnabled && thirstyPlantNames.isNotEmpty) {
-      await NotificationService().scheduleReminderForCurrentlyThirstyPlants(
-        plantNames: thirstyPlantNames,
-      );
+    final notificationService = NotificationService();
+    await notificationService.cancelAllNotifications();
+
+    if (_notificationsEnabled) {
+      final thirstyPlantNames = plantProvider.plants
+          .where(plantProvider.isPlantThirsty)
+          .map((plant) => plant.name)
+          .toList();
+
+      if (thirstyPlantNames.isNotEmpty) {
+        await notificationService.scheduleReminderForCurrentlyThirstyPlants(
+          plantNames: thirstyPlantNames,
+        );
+      }
+
+      for (final plant in plantProvider.plants) {
+        if (!plantProvider.isPlantThirsty(plant)) {
+          await notificationService.schedulePlantReminder(
+            id: plant.id.hashCode,
+            plantName: plant.name,
+            days: plant.frequencyInDays,
+          );
+        }
+      }
     }
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Reminder time updated!')));
+    final theme = Theme.of(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Reminder time updated!'),
+        backgroundColor: theme.colorScheme.primary,
+      ),
+    );
   }
 
   Future<void> _toggleNotifications(bool value) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final theme = Theme.of(context);
+    final plantProvider = Provider.of<PlantProvider>(context, listen: false);
+
     setState(() => _notificationsEnabled = value);
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notificationsEnabled', value);
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(value ? "Reminders enabled" : "Reminders disabled"),
-          duration: const Duration(seconds: 1),
-        ),
-      );
+    if (value == false) {
+      await NotificationService().cancelAllNotifications();
+    } else {
+      final thirstyPlantNames = plantProvider.plants
+          .where(plantProvider.isPlantThirsty)
+          .map((p) => p.name)
+          .toList();
+
+      if (thirstyPlantNames.isNotEmpty) {
+        await NotificationService().scheduleReminderForCurrentlyThirstyPlants(
+          plantNames: thirstyPlantNames,
+        );
+      }
     }
+
+    if (!mounted) return;
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(value ? "Reminders enabled" : "Reminders disabled"),
+        backgroundColor: theme.colorScheme.primary,
+        duration: const Duration(seconds: 1),
+      ),
+    );
   }
 
   @override
@@ -242,7 +284,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: colorScheme.primary,
             ),
             title: const Text('Achievements'),
-            subtitle: const Text('Celebrate your garden milestones'),
             trailing: Icon(Icons.chevron_right, color: theme.hintColor),
             onTap: () {
               Navigator.push(

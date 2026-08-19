@@ -178,22 +178,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Calculate position: 3 columns, auto-place from top to bottom
                     final existingPlants = plantProvider.plants;
-                    // 3 columns × 3 rows.
-                    // The bottom-right corner is intentionally left open for the pond.
-                    const xPositions = [0.22, 0.50, 0.76];
-                    const yPositions = [0.20, 0.43, 0.68];
+                    const xPositions = [0.22, 0.50, 0.76]; // 3 columns
 
-                    // Nine normal slots, except index 8: lower-right pond space.
-                    const usableSlots = [
-                      0, // top-left
-                      1, // top-center
-                      2, // top-right
-                      3, // middle-left
-                      4, // middle-center
-                      5, // middle-right
-                      6, // bottom-left
-                      7, // bottom-center
+                    // 10 rows, adjust spacing as needed
+                    const yPositions = [
+                      0.20,
+                      0.32,
+                      0.44,
+                      0.56,
+                      0.68,
+                      0.80,
+                      0.92,
+                      1.04,
+                      1.16,
+                      1.28,
                     ];
+
+                    final maxSlots =
+                        xPositions.length * yPositions.length; // 30
+                    final usableSlots = List.generate(maxSlots, (i) => i);
 
                     final plantNumber = existingPlants.length;
                     final slot = usableSlots[plantNumber % usableSlots.length];
@@ -211,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         category: selectedPlantType,
                         frequencyInDays: frequency,
                         lastCompleted: DateTime.now().subtract(
-                          Duration(days: frequency),
+                          Duration(days: frequency + 1),
                         ),
                         growthLevel: startingGrowth,
                         dateAdded: dateAdded,
@@ -241,11 +244,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Calculate progress using data from the provider
-    int completedCount = plantProvider.plants.where((t) => t.isDone).length;
-    double progress = plantProvider.plants.isEmpty
-        ? 0
-        : completedCount / plantProvider.plants.length;
+    final plants = plantProvider.plants;
+    final thirstyCount = plants.where(plantProvider.isPlantThirsty).length;
+    final completedCount = plants.length - thirstyCount;
+
+    double progress = plants.isEmpty ? 0 : completedCount / plants.length;
 
     return Scaffold(
       appBar: AppBar(

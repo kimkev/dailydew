@@ -115,6 +115,7 @@ class _GardenViewState extends State<GardenView> {
                         final y = plant.positionY ?? 0.5;
                         final isSelected =
                             plantProvider.selectedPlantId == plant.id;
+                        final isThirsty = plantProvider.isPlantThirsty(plant);
 
                         return Positioned(
                           left: x * availableWidth - 40,
@@ -163,7 +164,7 @@ class _GardenViewState extends State<GardenView> {
                                             ? colorScheme.primary.withValues(
                                                 alpha: 0.55,
                                               )
-                                            : plant.isDone
+                                            : isThirsty
                                             ? const Color(
                                                 0xFF4E342E,
                                               ) // Dark, moist soil

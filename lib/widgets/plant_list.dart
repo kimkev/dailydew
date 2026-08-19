@@ -243,12 +243,12 @@ class PlantList extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  decoration: item.isDone
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  color: item.isDone
-                                      ? theme.disabledColor
-                                      : colorScheme.onSurface,
+                                  decoration: canWater
+                                      ? null
+                                      : TextDecoration.lineThrough,
+                                  color: canWater
+                                      ? colorScheme.onSurface
+                                      : theme.disabledColor,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -260,16 +260,17 @@ class PlantList extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
-                                item.isDone
-                                    ? "Last watered: Today"
-                                    : "Last watered: ${DateTime.now().difference(item.lastCompleted).inDays} days ago",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: theme.hintColor,
-                                  fontStyle: FontStyle.italic,
+                              if (item.totalCompletions > 0)
+                                Text(
+                                  canWater
+                                      ? "Last watered: ${DateTime.now().difference(item.lastCompleted).inDays} days ago"
+                                      : "Last watered: Today",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: theme.hintColor,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),

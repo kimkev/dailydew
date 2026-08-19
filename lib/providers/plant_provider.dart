@@ -39,12 +39,6 @@ class PlantProvider extends ChangeNotifier {
 
     if (savedPlants != null) {
       _plants = Plant.decode(savedPlants);
-
-      for (final plant in _plants) {
-        if (isPlantThirsty(plant)) {
-          plant.isDone = false;
-        }
-      }
     }
 
     notifyListeners();
@@ -71,16 +65,25 @@ class PlantProvider extends ChangeNotifier {
     final notificationsEnabled = await NotificationService()
         .areNotificationsEnabled();
 
-    if (notificationsEnabled && !plant.isDone) {
-      final thirstyPlantNames = _plants
-          .where(isPlantThirsty)
-          .map((plant) => plant.name)
-          .toList();
+    if (notificationsEnabled) {
+      // If the plant is already thirsty when added, schedule a summary
+      if (isPlantThirsty(plant)) {
+        final thirstyPlantNames = _plants
+            .where(isPlantThirsty)
+            .map((p) => p.name)
+            .toList();
 
-      await NotificationService()
-          .scheduleReminderForCurrentlyThirstyPlants(
-        plantNames: thirstyPlantNames,
-      );
+        await NotificationService().scheduleReminderForCurrentlyThirstyPlants(
+          plantNames: thirstyPlantNames,
+        );
+      } else {
+        // If it's NOT thirsty yet, schedule a future reminder using its unique ID
+        await NotificationService().schedulePlantReminder(
+          id: plant.id.hashCode, // <--- THIS CONVERTS STRING TO INT
+          plantName: plant.name,
+          days: plant.frequencyInDays,
+        );
+      }
     }
 
     notifyListeners();
@@ -89,20 +92,24 @@ class PlantProvider extends ChangeNotifier {
   Future<void> togglePlant(int index) async {
     final plant = _plants[index];
 
-    if (plant.isDone) {
-      plant.unwater();
-    } else {
+    if (isPlantThirsty(plant)) {
       plant.water();
 
       final notificationsEnabled = await NotificationService()
           .areNotificationsEnabled();
 
       if (notificationsEnabled) {
+        // Cancel old per-plant reminder
+        await NotificationService().cancelNotification(plant.id.hashCode);
+
+        // Schedule new summary based on this watering
         await NotificationService().scheduleWateringSummary(
           plantNames: [plant.name],
           days: plant.frequencyInDays,
         );
       }
+    } else {
+      plant.unwater();
     }
 
     await _savePlants();
@@ -110,6 +117,12 @@ class PlantProvider extends ChangeNotifier {
   }
 
   void deletePlant(int index) {
+    final plant = _plants[index];
+
+    // Cancel the specific notification for this plant so it doesn't fire
+    // after the plant is deleted
+    NotificationService().cancelNotification(plant.id.hashCode);
+
     _plants.removeAt(index);
     _savePlants();
     notifyListeners();
@@ -152,15 +165,22 @@ class PlantProvider extends ChangeNotifier {
     int newGrowthLevel,
   ) {
     final index = _plants.indexWhere((plant) => plant.id == id);
-
     if (index == -1) return;
 
-    _plants[index].name = newName;
-    _plants[index].frequencyInDays = newFrequency;
-    _plants[index].growthLevel = newGrowthLevel.clamp(0, 100);
+    final plant = _plants[index];
+
+    // Cancel old reminder for this plant
+    NotificationService().cancelNotification(plant.id.hashCode);
+
+    plant.name = newName;
+    plant.frequencyInDays = newFrequency;
+    plant.growthLevel = newGrowthLevel.clamp(0, 100);
 
     _savePlants();
     notifyListeners();
+
+    // Optionally: if it's not thirsty, schedule a new future reminder
+    // (you can do this in Settings when time changes, or here if you prefer)
   }
 
   void updatePlantPosition(String id, double x, double y) {
@@ -210,7 +230,6 @@ class PlantProvider extends ChangeNotifier {
 
     if (index != -1) {
       _plants[index].unwater();
-
       _savePlants();
       notifyListeners();
     }
