@@ -17,18 +17,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _remindersEnabled = false;
   String? _permissionDeniedMessage;
 
-  Future<void> _pickTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
-  }
-
   void _finishOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('seenOnboarding', true);

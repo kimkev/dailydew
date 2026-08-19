@@ -265,6 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Water all thirsty plants
                 await taskProvider.waterAll();
                 await SoundService.instance.playWaterAll();
+                if (!context.mounted) return;
 
                 // Show confirmation with undo
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -341,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             )
           : GardenView(),
-          
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),

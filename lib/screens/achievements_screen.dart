@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/plant.dart';
 import '../providers/plant_provider.dart';
 
 class AchievementsScreen extends StatelessWidget {
@@ -100,7 +99,7 @@ class AchievementsScreen extends StatelessWidget {
         icon: '🌱',
         title: 'First Seedling',
         description: 'Add your first plant to the garden.',
-        unlocked: tasks.length >= 1,
+        unlocked: tasks.isNotEmpty,
         progress: tasks.length,
         target: 1,
       ),
@@ -356,7 +355,7 @@ class _AchievementCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      '${displayedProgress}/${achievement.target}',
+                      '$displayedProgress/${achievement.target}',
                       style: TextStyle(color: theme.hintColor, fontSize: 12),
                     ),
                   ],
