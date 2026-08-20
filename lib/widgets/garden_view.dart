@@ -13,7 +13,13 @@ class GardenView extends StatefulWidget {
   State<GardenView> createState() => _GardenViewState();
 }
 
-class _GardenViewState extends State<GardenView> {
+class _GardenViewState extends State<GardenView>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _beeAnim;
+  late Animation<double> _butterflyAnim;
+  late Animation<double> _rippleAnim;
+
   @override
   void initState() {
     super.initState();
@@ -21,6 +27,28 @@ class _GardenViewState extends State<GardenView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SoundService.instance.playGardenChirp();
     });
+
+    // Animation controller: 4-second loop
+    _animController = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    );
+    // Bee: moves left→right, oscillating
+    _beeAnim = Tween<double>(begin: -6.0, end: 6.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+
+    // Butterfly: moves right→left (opposite direction)
+    _butterflyAnim = Tween<double>(begin: 6.0, end: -6.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+
+    // Ripples: gentle up-down
+    _rippleAnim = Tween<double>(begin: -2.0, end: 2.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+
+    _animController.repeat(reverse: true);
   }
 
   String _getGrowthEmoji(Plant plant) {
@@ -90,182 +118,199 @@ class _GardenViewState extends State<GardenView> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [colorScheme.tertiary, colorScheme.onTertiary],
+                      colors: [
+                        const Color(0xFFD7CCC8), // light warm wood
+                        const Color(0xFFA1887F), // medium wood
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: colorScheme.outlineVariant,
-                      width: 6,
+                      color: const Color(0xFF4E342E), // dark brown frame
+                      width: 12,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.shadowColor.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(4, 4),
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      ..._buildBackgroundDecor(),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFF6D4C41),
+                        width: 2,
+                      ),
+                    ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        ..._buildBackgroundDecor(),
 
-                      ...plants.map((plant) {
-                        final x = plant.positionX ?? 0.5;
-                        final y = plant.positionY ?? 0.5;
-                        final isSelected =
-                            plantProvider.selectedPlantId == plant.id;
-                        final isThirsty = plantProvider.isPlantThirsty(plant);
+                        ...plants.map((plant) {
+                          final x = plant.positionX ?? 0.5;
+                          final y = plant.positionY ?? 0.5;
+                          final isSelected =
+                              plantProvider.selectedPlantId == plant.id;
+                          final isThirsty = plantProvider.isPlantThirsty(plant);
 
-                        // Base soil size + small growth scaling
-                        final soilWidth =
-                            56 +
-                            (plant.growthLevel *
-                                0.4); // e.g., 56 → ~96 at max growth
-                        final soilHeight =
-                            18 +
-                            (plant.growthLevel *
-                                0.15); // subtle vertical growth
+                          // Base soil size + small growth scaling
+                          final soilWidth =
+                              56 +
+                              (plant.growthLevel *
+                                  0.4); // e.g., 56 → ~96 at max growth
+                          final soilHeight =
+                              18 +
+                              (plant.growthLevel *
+                                  0.15); // subtle vertical growth
 
-                        return Positioned(
-                          left: x * availableWidth - 40,
-                          top: y * availableHeight - 40,
-                          child: GestureDetector(
-                            onPanStart: (_) {
-                              plantProvider.selectPlant(plant.id);
-                              HapticFeedback.lightImpact();
-                            },
-                            onPanUpdate: (details) {
-                              final RenderBox box =
-                                  context.findRenderObject() as RenderBox;
+                          return Positioned(
+                            left: x * availableWidth - 40,
+                            top: y * availableHeight - 40,
+                            child: GestureDetector(
+                              onPanStart: (_) {
+                                plantProvider.selectPlant(plant.id);
+                                HapticFeedback.lightImpact();
+                              },
+                              onPanUpdate: (details) {
+                                final RenderBox box =
+                                    context.findRenderObject() as RenderBox;
 
-                              final localOffset = box.globalToLocal(
-                                details.globalPosition,
-                              );
+                                final localOffset = box.globalToLocal(
+                                  details.globalPosition,
+                                );
 
-                              final double newX =
-                                  localOffset.dx / availableWidth;
-                              final double newY =
-                                  localOffset.dy / availableHeight;
+                                final double newX =
+                                    localOffset.dx / availableWidth;
+                                final double newY =
+                                    localOffset.dy / availableHeight;
 
-                              plantProvider.movePlant(plant.id, newX, newY);
-                            },
-                            onPanEnd: (_) {
-                              plantProvider.savePositions();
-                              plantProvider.selectPlant(null);
-                            },
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Stack(
-                                  alignment: Alignment.bottomCenter,
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    // Soil patch: light when thirsty, dark after watering.
-                                    AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      curve: Curves.easeInOut,
-                                      width: soilWidth,
-                                      height: soilHeight,
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? colorScheme.primary.withValues(
-                                                alpha: 0.55,
-                                              )
-                                            : isThirsty
-                                            ? const Color(
-                                                0xFF9A7058,
-                                              ) // light, dry soil
-                                            : const Color(
-                                                0xFF4E342E,
-                                              ), // dark, moist soil
-                                        borderRadius: BorderRadius.circular(30),
-                                        border: isSelected
-                                            ? Border.all(
-                                                color: Colors.white,
-                                                width: 2,
-                                              )
-                                            : null,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.12,
-                                            ),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
+                                plantProvider.movePlant(plant.id, newX, newY);
+                              },
+                              onPanEnd: (_) {
+                                plantProvider.savePositions();
+                                plantProvider.selectPlant(null);
+                              },
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Stack(
+                                    alignment: Alignment.bottomCenter,
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      // Soil patch: light when thirsty, dark after watering.
+                                      AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 300,
+                                        ),
+                                        curve: Curves.easeInOut,
+                                        width: soilWidth,
+                                        height: soilHeight,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? colorScheme.primary.withValues(
+                                                  alpha: 0.55,
+                                                )
+                                              : isThirsty
+                                              ? const Color(
+                                                  0xFF9A7058,
+                                                ) // light, dry soil
+                                              : const Color(
+                                                  0xFF4E342E,
+                                                ), // dark, moist soil
+                                          borderRadius: BorderRadius.circular(
+                                            30,
                                           ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    // Plant floats just above its soil.
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 3),
-                                      child: Text(
-                                        _getGrowthEmoji(plant),
-                                        style: TextStyle(
-                                          fontSize:
-                                              30 + (plant.growthLevel * 0.4),
+                                          border: isSelected
+                                              ? Border.all(
+                                                  color: Colors.white,
+                                                  width: 2,
+                                                )
+                                              : null,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.12,
+                                              ),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(top: 2),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.surfaceContainerHighest,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    plant.name,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
 
-                      if (plants.isEmpty)
-                        Positioned.fill(
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.yard_outlined,
-                                  size: 60,
-                                  color: colorScheme.onSurface.withValues(
-                                    alpha: 0.2,
+                                      // Plant floats just above its soil.
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 3,
+                                        ),
+                                        child: Text(
+                                          _getGrowthEmoji(plant),
+                                          style: TextStyle(
+                                            fontSize:
+                                                30 + (plant.growthLevel * 0.4),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'Plants you add will appear here!',
-                                  style: TextStyle(
-                                    color: colorScheme.onSurface.withValues(
-                                      alpha: 0.4,
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
                                     ),
-                                    fontWeight: FontWeight.bold,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          colorScheme.surfaceContainerHighest,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      plant.name,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+
+                        if (plants.isEmpty)
+                          Positioned.fill(
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.yard_outlined,
+                                    size: 60,
+                                    color: colorScheme.onSurface.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Plants you add will appear here!',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurface.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },
@@ -311,8 +356,15 @@ class _GardenViewState extends State<GardenView> {
             ),
 
             // Water ripples.
-            const Text('〰️  〰️', style: TextStyle(fontSize: 17)),
-
+            AnimatedBuilder(
+              animation: _rippleAnim,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _rippleAnim.value),
+                  child: const Text('〰️  〰️', style: TextStyle(fontSize: 17)),
+                );
+              },
+            ),
             // Lily pad and rocks.
             const Positioned(
               right: 24,
@@ -350,13 +402,144 @@ class _GardenViewState extends State<GardenView> {
         ),
       ),
 
-      // Small clusters of natural garden decoration.
+      // Bee hovering near the top-left flowers.
+      AnimatedBuilder(
+        animation: _beeAnim,
+        builder: (context, child) {
+          return Positioned(
+            top: 35 + _beeAnim.value,
+            left: 60,
+            child: Opacity(
+              opacity: 0.35,
+              child: const Text('🐝', style: TextStyle(fontSize: 18)),
+            ),
+          );
+        },
+      ),
+
+      // Bee #2 - top left, slightly lower
+      AnimatedBuilder(
+        animation: _beeAnim,
+        builder: (context, child) {
+          return Positioned(
+            top: 65 + _beeAnim.value,
+            left: 40,
+            child: Opacity(
+              opacity: 0.30,
+              child: const Text('🐝', style: TextStyle(fontSize: 16)),
+            ),
+          );
+        },
+      ),
+
+      // Bee #3 - top left, near the corner
+      AnimatedBuilder(
+        animation: _beeAnim,
+        builder: (context, child) {
+          return Positioned(
+            top: 25 + _beeAnim.value * 0.8,
+            left: 80,
+            child: Opacity(
+              opacity: 0.28,
+              child: const Text('🐝', style: TextStyle(fontSize: 17)),
+            ),
+          );
+        },
+      ),
+
+      // Butterfly drifting near the center-right.
+      AnimatedBuilder(
+        animation: _butterflyAnim,
+        builder: (context, child) {
+          return Positioned(
+            top: 200 + _butterflyAnim.value,
+            right: 80,
+            child: Opacity(
+              opacity: 0.30,
+              child: const Text('🦋', style: TextStyle(fontSize: 20)),
+            ),
+          );
+        },
+      ),
+
+      // Butterfly #2 - lower left area
+      AnimatedBuilder(
+        animation: _butterflyAnim,
+        builder: (context, child) {
+          return Positioned(
+            top: 180 + _butterflyAnim.value * 0.8,
+            left: 100,
+            child: Opacity(
+              opacity: 0.25,
+              child: const Text('🦋', style: TextStyle(fontSize: 18)),
+            ),
+          );
+        },
+      ),
+
+      // Butterfly #3 - bottom center
+      AnimatedBuilder(
+        animation: _butterflyAnim,
+        builder: (context, child) {
+          return Positioned(
+            bottom: 100,
+            left: 140 + _butterflyAnim.value * 0.5,
+            child: Opacity(
+              opacity: 0.28,
+              child: const Text('🦋', style: TextStyle(fontSize: 19)),
+            ),
+          );
+        },
+      ),
+
+      // Butterfly #3 - bottom right
+      AnimatedBuilder(
+        animation: _butterflyAnim,
+        builder: (context, child) {
+          return Positioned(
+            bottom: 100,
+            right: 100 + _butterflyAnim.value * 0.6,
+            child: Opacity(
+              opacity: 0.28,
+              child: const Text('🦋', style: TextStyle(fontSize: 19)),
+            ),
+          );
+        },
+      ),
+      // Flower #1
       Positioned(
-        top: 28,
-        left: 22,
+        top: 38,
+        left: 32,
         child: Opacity(
           opacity: 0.25,
-          child: const Text('🌼', style: TextStyle(fontSize: 15)),
+          child: const Text('🌸', style: TextStyle(fontSize: 20)),
+        ),
+      ),
+      // Flower #2
+      Positioned(
+        top: 38,
+        left: 62,
+        child: Opacity(
+          opacity: 0.25,
+          child: const Text('🌸', style: TextStyle(fontSize: 20)),
+        ),
+      ),
+      // Flower #3
+      Positioned(
+        top: 65,
+        left: 55,
+        child: Opacity(
+          opacity: 0.28,
+          child: const Text('🌻', style: TextStyle(fontSize: 15)),
+        ),
+      ),
+      // Flower #4 - white/yellow daisy near bees
+      Positioned(
+        top: 50,
+        left: 45,
+        child: Opacity(
+          opacity: 0.26,
+          child: const Text('🌼', style: TextStyle(fontSize: 17)),
         ),
       ),
       Positioned(

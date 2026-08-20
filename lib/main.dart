@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Plant Tracker',
+          title: 'Daily Dew',
           themeMode: themeProvider.themeMode,
 
           // --- LIGHT THEME (Clean & Natural) ---
