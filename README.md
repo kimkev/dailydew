@@ -1,8 +1,8 @@
-# PlantSip
+# DailyDew
 
-**PlantSip – Your garden in your pocket: simple plant watering reminders.**
+**DailyDew – Your garden in your pocket: simple plant watering reminders.**
 
-PlantSip is a minimalistic, garden‑themed plant care tracker for Android. It helps you keep your houseplants healthy with custom watering schedules and gentle reminders, all inside a small, emoji‑driven virtual garden.
+DailyDew is a minimalistic, garden‑themed plant care tracker for Android. It helps you keep your houseplants healthy with custom watering schedules and gentle reminders, all inside a small, emoji‑driven virtual garden.
 
 ## Features
 
@@ -48,10 +48,10 @@ flutter run
 
 ## Privacy
 
-PlantSip does not collect, store, or transmit personal data to external servers. All plant and care data is stored locally on your device. The app does not use third‑party analytics or advertising SDKs.
+DailyDew does not collect, store, or transmit personal data to external servers. All plant and care data is stored locally on your device. The app does not use third‑party analytics or advertising SDKs.
 
 Privacy policy:  
-https://kimkev.github.io/privacypolicies/privacy-plantsip.html
+[https://kimkev.github.io/privacypolicies/privacy-dailydew.html](https://kimkev.github.io/privacypolicies/privacy-dailydew.html)
 
 ## License
 

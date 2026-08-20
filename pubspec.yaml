@@ -1,5 +1,5 @@
-name: my_first_app
-description: "PlantSip - Simple Water Reminders."
+name: dailydew
+description: "Simple Water Reminders."
 publish_to: 'none'
 
 version: 1.0.0+1

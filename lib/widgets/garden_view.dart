@@ -117,6 +117,16 @@ class _GardenViewState extends State<GardenView> {
                             plantProvider.selectedPlantId == plant.id;
                         final isThirsty = plantProvider.isPlantThirsty(plant);
 
+                        // Base soil size + small growth scaling
+                        final soilWidth =
+                            56 +
+                            (plant.growthLevel *
+                                0.4); // e.g., 56 → ~96 at max growth
+                        final soilHeight =
+                            18 +
+                            (plant.growthLevel *
+                                0.15); // subtle vertical growth
+
                         return Positioned(
                           left: x * availableWidth - 40,
                           top: y * availableHeight - 40,
@@ -157,8 +167,8 @@ class _GardenViewState extends State<GardenView> {
                                         milliseconds: 300,
                                       ),
                                       curve: Curves.easeInOut,
-                                      width: 78,
-                                      height: 26,
+                                      width: soilWidth,
+                                      height: soilHeight,
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? colorScheme.primary.withValues(
@@ -192,12 +202,12 @@ class _GardenViewState extends State<GardenView> {
 
                                     // Plant floats just above its soil.
                                     Padding(
-                                      padding: const EdgeInsets.only(bottom: 6),
+                                      padding: const EdgeInsets.only(bottom: 3),
                                       child: Text(
                                         _getGrowthEmoji(plant),
                                         style: TextStyle(
                                           fontSize:
-                                              40 + (plant.growthLevel * 0.5),
+                                              30 + (plant.growthLevel * 0.4),
                                         ),
                                       ),
                                     ),
