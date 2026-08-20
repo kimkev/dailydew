@@ -1,6 +1,6 @@
 # DailyDew
 
-**DailyDew – Your garden in your pocket: simple plant watering reminders.**
+**DailyDew – Your garden in your pocket: Easy plant watering reminders.**
 
 DailyDew is a minimalistic, garden‑themed plant care tracker for Android. It helps you keep your houseplants healthy with custom watering schedules and gentle reminders, all inside a small, emoji‑driven virtual garden.
 

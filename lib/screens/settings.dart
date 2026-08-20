@@ -305,23 +305,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: _showThemeDialog,
           ),
 
-          const Divider(),
-
-          // 4. Upgrade to Pro
-          ListTile(
-            leading: const Icon(
-              Icons.star,
-              color: Colors.orange,
-            ), // Kept as brand color
-            title: const Text('Upgrade to Pro'),
-            subtitle: Text(
-              'Coming soon',
-              style: TextStyle(color: theme.hintColor),
-            ),
-            onTap: null, // Disabled until Pro features are implemented
-          ),
-          const Divider(height: 1),
-
           const Divider(height: 1),
 
           // === ABOUT SECTION ===
@@ -355,7 +338,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             leading: const Icon(Icons.person_outline, size: 20),
             title: const Text(
-              'Developed by Kevin Kim',
+              'Developed by kimkev',
               style: TextStyle(fontSize: 14),
             ),
             visualDensity: VisualDensity.compact,
