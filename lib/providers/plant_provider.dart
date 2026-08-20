@@ -93,8 +93,7 @@ class PlantProvider extends ChangeNotifier {
     final plant = _plants[index];
 
     if (isPlantThirsty(plant)) {
-      plant.water();
-
+      plant.water(reminderHour: _reminderHour, reminderMinute: _reminderMinute);
       final notificationsEnabled = await NotificationService()
           .areNotificationsEnabled();
 
@@ -133,7 +132,10 @@ class PlantProvider extends ChangeNotifier {
 
     for (final plant in _plants) {
       if (isPlantThirsty(plant)) {
-        plant.water();
+        plant.water(
+          reminderHour: _reminderHour,
+          reminderMinute: _reminderMinute,
+        );
         wateredPlants.add(plant);
       }
     }
@@ -253,7 +255,7 @@ class PlantProvider extends ChangeNotifier {
     String newName,
     int newFrequency,
     int newGrowthLevel,
-    String newCategory, 
+    String newCategory,
   ) {
     editPlant(id, newName, newFrequency, newGrowthLevel, newCategory);
   }

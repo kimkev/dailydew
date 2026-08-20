@@ -181,6 +181,24 @@ class PlantList extends StatelessWidget {
     );
   }
 
+  String _buildLastWateredText(DateTime lastCompleted) {
+    final now = DateTime.now();
+    final isToday =
+        lastCompleted.year == now.year &&
+        lastCompleted.month == now.month &&
+        lastCompleted.day == now.day;
+
+    if (isToday) {
+      return 'Last watered: Today';
+    }
+
+    final daysAgo = now.difference(lastCompleted).inDays;
+    if (daysAgo == 1) {
+      return 'Last watered: 1 day ago';
+    }
+    return 'Last watered: $daysAgo days ago';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -230,216 +248,226 @@ class PlantList extends StatelessWidget {
             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
             itemCount: plants.length,
             itemBuilder: (ctx, index) {
-              final item = plants[index];
-              final plantProvider = Provider.of<PlantProvider>(
-                context,
-                listen: false,
-              );
-              final canWater = plantProvider.isPlantThirsty(item);
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PlantDetailScreen(plant: item),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      children: [
-                        // 1. LEFT: Plant Identity
-                        _buildLeadingIcon(context, item),
+              return Consumer<PlantProvider>(
+                builder: (context, plantProvider, _) {
+                  final item = plants[index];
+                  final canWater = plantProvider.isPlantThirsty(item);
 
-                        const SizedBox(width: 16),
-
-                        // 2. MIDDLE: Info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                item.name,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: canWater
-                                      ? null
-                                      : TextDecoration.lineThrough,
-                                  color: canWater
-                                      ? colorScheme.onSurface
-                                      : theme.disabledColor,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                "Water every ${item.frequencyInDays} days",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: theme.hintColor,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              if (item.totalCompletions > 0)
-                                Text(
-                                  canWater
-                                      ? "Last watered: ${DateTime.now().difference(item.lastCompleted).inDays} days ago"
-                                      : "Last watered: Today",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: theme.hintColor,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                            ],
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                PlantDetailScreen(plant: item),
                           ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
                         ),
-
-                        // 3. RIGHT: Action Buttons
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: Row(
                           children: [
-                            // WATERING BUTTON
-                            GestureDetector(
-                              onTap: !canWater
-                                  ? null
-                                  : () {
-                                      final previousGrowthStage =
-                                          item.growthStage;
+                            // 1. LEFT: Plant Identity
+                            _buildLeadingIcon(context, item),
 
-                                      onToggle(index, true);
+                            const SizedBox(width: 16),
 
-                                      final updatedGrowthStage =
-                                          item.growthStage;
-
-                                      SoundService.instance.playWater();
-
-                                      if (updatedGrowthStage >
-                                          previousGrowthStage) {
-                                        SoundService.instance.playGrowth();
-                                      }
-
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).hideCurrentSnackBar();
-
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Watered ${item.name}! 🌱',
-                                            style: TextStyle(
-                                              color: theme
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
-                                          ),
-                                          duration: const Duration(seconds: 3),
-                                          behavior: SnackBarBehavior.floating,
-                                          dismissDirection:
-                                              DismissDirection.horizontal,
-                                          margin: const EdgeInsets.only(
-                                            bottom: 90,
-                                            left: 20,
-                                            right: 20,
-                                          ),
-                                          backgroundColor: theme
-                                              .colorScheme
-                                              .surfaceContainerHighest,
-                                          persist: false,
-                                          action: SnackBarAction(
-                                            label: 'UNDO',
-                                            textColor:
-                                                theme.colorScheme.primary,
-                                            onPressed: () {
-                                              final provider =
-                                                  Provider.of<PlantProvider>(
-                                                    context,
-                                                    listen: false,
-                                                  );
-
-                                              provider.undoPlantWatering(
-                                                item.id,
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      );
-                                    },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: !canWater
-                                      ? colorScheme.tertiaryContainer
-                                      : colorScheme.secondaryContainer,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: !canWater
-                                      ? []
-                                      : [
-                                          BoxShadow(
-                                            color: colorScheme.secondary
-                                                .withValues(alpha: 0.2),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                ),
-                                child: Icon(
-                                  !canWater
-                                      ? Icons.check_circle
-                                      : Icons.water_drop,
-                                  color: !canWater
-                                      ? colorScheme.onTertiaryContainer
-                                      : colorScheme.onSecondaryContainer,
-                                  size: 32,
-                                ),
+                            // 2. MIDDLE: Info
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    item.name,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      decoration: canWater
+                                          ? null
+                                          : TextDecoration.lineThrough,
+                                      color: canWater
+                                          ? colorScheme.onSurface
+                                          : theme.disabledColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    item.frequencyInDays == 1
+                                        ? 'Water every 1 day'
+                                        : 'Water every ${item.frequencyInDays} days',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: theme.hintColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (item.totalCompletions > 0)
+                                    Text(
+                                      _buildLastWateredText(item.lastCompleted),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: theme.hintColor,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
 
-                            // TRIPLE DOT MENU
-                            PopupMenuButton<String>(
-                              icon: Icon(
-                                Icons.more_vert,
-                                color: theme.hintColor,
-                              ),
-                              onSelected: (val) {
-                                if (val == 'edit') {
-                                  _showEditPlantDialog(context, item);
-                                }
-                                if (val == 'delete') {
-                                  _showDeleteConfirmation(context, item, index);
-                                }
-                              },
-                              itemBuilder: (ctx) => [
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: Text("Edit Plant"),
-                                ),
-                                PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text(
-                                    "Remove",
-                                    style: TextStyle(color: colorScheme.error),
+                            // 3. RIGHT: Action Buttons
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // WATERING BUTTON
+                                GestureDetector(
+                                  onTap: !canWater
+                                      ? null
+                                      : () {
+                                          final previousGrowthStage =
+                                              item.growthStage;
+
+                                          onToggle(index, true);
+
+                                          final updatedGrowthStage =
+                                              item.growthStage;
+
+                                          SoundService.instance.playWater();
+
+                                          if (updatedGrowthStage >
+                                              previousGrowthStage) {
+                                            SoundService.instance.playGrowth();
+                                          }
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).hideCurrentSnackBar();
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Watered ${item.name}! 🌱',
+                                                style: TextStyle(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                              ),
+                                              duration: const Duration(
+                                                seconds: 3,
+                                              ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              dismissDirection:
+                                                  DismissDirection.horizontal,
+                                              margin: const EdgeInsets.only(
+                                                bottom: 90,
+                                                left: 20,
+                                                right: 20,
+                                              ),
+                                              backgroundColor: theme
+                                                  .colorScheme
+                                                  .surfaceContainerHighest,
+                                              persist: false,
+                                              action: SnackBarAction(
+                                                label: 'UNDO',
+                                                textColor:
+                                                    theme.colorScheme.primary,
+                                                onPressed: () {
+                                                  final provider =
+                                                      Provider.of<
+                                                        PlantProvider
+                                                      >(context, listen: false);
+
+                                                  provider.undoPlantWatering(
+                                                    item.id,
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: !canWater
+                                          ? colorScheme.tertiaryContainer
+                                          : colorScheme.secondaryContainer,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: !canWater
+                                          ? []
+                                          : [
+                                              BoxShadow(
+                                                color: colorScheme.secondary
+                                                    .withValues(alpha: 0.2),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ],
+                                    ),
+                                    child: Icon(
+                                      !canWater
+                                          ? Icons.check_circle
+                                          : Icons.water_drop,
+                                      color: !canWater
+                                          ? colorScheme.onTertiaryContainer
+                                          : colorScheme.onSecondaryContainer,
+                                      size: 32,
+                                    ),
                                   ),
+                                ),
+
+                                // TRIPLE DOT MENU
+                                PopupMenuButton<String>(
+                                  icon: Icon(
+                                    Icons.more_vert,
+                                    color: theme.hintColor,
+                                  ),
+                                  onSelected: (val) {
+                                    if (val == 'edit') {
+                                      _showEditPlantDialog(context, item);
+                                    }
+                                    if (val == 'delete') {
+                                      _showDeleteConfirmation(
+                                        context,
+                                        item,
+                                        index,
+                                      );
+                                    }
+                                  },
+                                  itemBuilder: (ctx) => [
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: Text("Edit Plant"),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Text(
+                                        "Remove",
+                                        style: TextStyle(
+                                          color: colorScheme.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               );
             },
           ),

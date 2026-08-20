@@ -58,8 +58,12 @@ class PlantDetailScreen extends StatelessWidget {
                 title: 'Last Watered',
                 value: daysSinceWatered == 0
                     ? 'Today'
+                    : daysSinceWatered == 1
+                    ? '1 day ago'
                     : '$daysSinceWatered days ago',
-                subtitle: 'Water every ${currentPlant.frequencyInDays} days',
+                subtitle: currentPlant.frequencyInDays == 1
+                    ? 'Water every 1 day'
+                    : 'Water every ${currentPlant.frequencyInDays} days',
               ),
               const SizedBox(height: 16),
 

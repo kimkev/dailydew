@@ -1,4 +1,4 @@
-package com.kimkev.DailyDew
+package com.kimkev.dailydew
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -34,14 +34,34 @@ class Plant {
     required int reminderHour,
     required int reminderMinute,
   }) {
-    final minimumDueTime = lastCompleted.add(Duration(days: frequencyInDays));
+    // Treat as "new plant" only if:
+    // - added today, AND
+    // - never watered before (totalCompletions == 0)
+    final addedToday =
+        dateAdded.year == now.year &&
+        dateAdded.month == now.month &&
+        dateAdded.day == now.day;
 
-    if (now.isBefore(minimumDueTime)) {
-      return false;
+    final neverWatered = totalCompletions == 0;
+
+    if (addedToday && neverWatered) {
+      return true;
     }
 
-    // Once due, always considered thirsty (ignoring daily reminder time)
-    return true;
+    // Compute due date (date part only)
+    final dueDate = lastCompleted.add(Duration(days: frequencyInDays));
+
+    // Combine due date with current scheduled time
+    final dueMoment = DateTime(
+      dueDate.year,
+      dueDate.month,
+      dueDate.day,
+      reminderHour,
+      reminderMinute,
+    );
+
+    // Thirsty only on/after the scheduled time on the due day
+    return !now.isBefore(dueMoment);
   }
 
   int get growthStage => (growthLevel.clamp(0, 99) ~/ 10);
@@ -142,9 +162,19 @@ class Plant {
     }
   }
 
-  void water() {
-    final previousLastCompleted = lastCompleted;
+  void water({required int reminderHour, required int reminderMinute}) {
     final now = DateTime.now();
+
+    // Anchor lastCompleted to today's scheduled time
+    final scheduledToday = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      reminderHour,
+      reminderMinute,
+    );
+
+    final previousLastCompleted = lastCompleted;
 
     int progression;
     switch (category.toLowerCase()) {
@@ -161,7 +191,7 @@ class Plant {
     }
 
     growthLevel = (growthLevel + progression).clamp(0, 99);
-    lastCompleted = now;
+    lastCompleted = scheduledToday;
     totalCompletions++;
 
     final daysSinceLast = now.difference(previousLastCompleted).inDays;
