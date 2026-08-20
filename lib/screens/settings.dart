@@ -355,7 +355,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             visualDensity: VisualDensity.compact,
             onTap: () async {
               final url = Uri.parse(
-                'https://kimkev.github.io/privacypolicies/privacy-DailyDew.html',
+                'https://kimkev.github.io/privacypolicies/privacy-dailydew.html',
               );
 
               final launched = await launchUrl(
