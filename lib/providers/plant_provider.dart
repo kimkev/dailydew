@@ -163,6 +163,7 @@ class PlantProvider extends ChangeNotifier {
     String newName,
     int newFrequency,
     int newGrowthLevel,
+    String newCategory,
   ) {
     final index = _plants.indexWhere((plant) => plant.id == id);
     if (index == -1) return;
@@ -173,6 +174,7 @@ class PlantProvider extends ChangeNotifier {
     NotificationService().cancelNotification(plant.id.hashCode);
 
     plant.name = newName;
+    plant.category = newCategory;
     plant.frequencyInDays = newFrequency;
     plant.growthLevel = newGrowthLevel.clamp(0, 100);
 
@@ -251,8 +253,9 @@ class PlantProvider extends ChangeNotifier {
     String newName,
     int newFrequency,
     int newGrowthLevel,
+    String newCategory, 
   ) {
-    editPlant(id, newName, newFrequency, newGrowthLevel);
+    editPlant(id, newName, newFrequency, newGrowthLevel, newCategory);
   }
 
   void updateTaskPosition(String id, double x, double y) {

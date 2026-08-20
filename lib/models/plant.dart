@@ -112,19 +112,33 @@ class Plant {
       '🌵',
     ];
 
+    const otherStages = [
+      '🌰',
+      '🌱',
+      '🌿',
+      '🌿',
+      '🍀',
+      '🪴',
+      '🪴',
+      '🌳',
+      '🌳',
+      '🌲',
+    ];
+
     switch (category.toLowerCase()) {
+      case 'flower':
+        return flowerStages[growthStage];
+      case 'houseplant':
+        return houseplantStages[growthStage];
       case 'vegetable':
         return vegetableStages[growthStage];
       case 'herb':
         return herbStages[growthStage];
       case 'succulent':
         return succulentStages[growthStage];
-      case 'houseplant':
-      case 'foliage':
-        return houseplantStages[growthStage];
-      case 'flower':
+      case 'other':
       default:
-        return flowerStages[growthStage];
+        return otherStages[growthStage];
     }
   }
 
@@ -141,6 +155,7 @@ class Plant {
       case 'houseplant':
       case 'herb':
       case 'succulent':
+      case 'other':
       default:
         progression = 1;
     }
@@ -171,6 +186,7 @@ class Plant {
       case 'houseplant':
       case 'herb':
       case 'succulent':
+      case 'other':
       default:
         progression = 1;
     }
@@ -178,7 +194,6 @@ class Plant {
     growthLevel = (growthLevel - progression).clamp(0, 99);
     totalCompletions--;
 
-    // Revert streak
     if (currentStreak > 0) {
       currentStreak--;
     }

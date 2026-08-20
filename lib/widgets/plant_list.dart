@@ -21,6 +21,15 @@ class PlantList extends StatelessWidget {
 
   // --- Helper: Edit Dialog ---
   void _showEditPlantDialog(BuildContext context, Plant plant) {
+    final categories = [
+      'Flower',
+      'Houseplant',
+      'Vegetable',
+      'Herb',
+      'Succulent',
+      'Other',
+    ];
+
     final nameController = TextEditingController(text: plant.name);
     final freqController = TextEditingController(
       text: plant.frequencyInDays.toString(),
@@ -29,6 +38,7 @@ class PlantList extends StatelessWidget {
     final plantProvider = Provider.of<PlantProvider>(context, listen: false);
 
     double growthLevel = plant.growthLevel.toDouble();
+    String selectedCategory = plant.category;
 
     showDialog(
       context: context,
@@ -47,6 +57,23 @@ class PlantList extends StatelessWidget {
                         labelText: 'Plant Name',
                       ),
                       autofocus: true,
+                    ),
+                    const SizedBox(height: 20),
+                    DropdownButtonFormField<String>(
+                      value: categories.contains(selectedCategory)
+                          ? selectedCategory
+                          : 'Flower',
+                      decoration: const InputDecoration(labelText: 'Category'),
+                      items: categories
+                          .map(
+                            (c) => DropdownMenuItem(value: c, child: Text(c)),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          selectedCategory = value!;
+                        });
+                      },
                     ),
                     const SizedBox(height: 20),
                     TextField(
@@ -93,6 +120,7 @@ class PlantList extends StatelessWidget {
                       name,
                       frequency,
                       growthLevel.round(),
+                      selectedCategory,
                     );
 
                     Navigator.pop(ctx);

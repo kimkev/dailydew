@@ -336,7 +336,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               horizontal: 16,
               vertical: 0,
             ),
-            leading: const Icon(Icons.person_outline, size: 20),
+            leading: const Icon(Icons.code, size: 20),
             title: const Text(
               'Developed by kimkev',
               style: TextStyle(fontSize: 14),
