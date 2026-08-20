@@ -51,6 +51,12 @@ class _GardenViewState extends State<GardenView>
     _animController.repeat(reverse: true);
   }
 
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
   String _getGrowthEmoji(Plant plant) {
     return plant.emoji;
   }

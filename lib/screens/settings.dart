@@ -268,7 +268,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           SwitchListTile(
             secondary: Icon(Icons.volume_up, color: colorScheme.primary),
-            title: const Text("Garden Sounds"),
+            title: const Text("Sounds"),
             value: _soundsEnabled,
             onChanged: (value) async {
               setState(() => _soundsEnabled = value);
