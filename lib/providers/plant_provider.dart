@@ -127,8 +127,8 @@ class PlantProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> waterAllPlants() async {
-    final wateredPlants = <Plant>[];
+  Future<List<String>> waterAllPlants() async {
+    final wateredPlantIds = <String>[];
 
     for (final plant in _plants) {
       if (isPlantThirsty(plant)) {
@@ -136,21 +136,25 @@ class PlantProvider extends ChangeNotifier {
           reminderHour: _reminderHour,
           reminderMinute: _reminderMinute,
         );
-        wateredPlants.add(plant);
+        wateredPlantIds.add(plant.id);
       }
     }
 
-    if (wateredPlants.isNotEmpty) {
+    if (wateredPlantIds.isNotEmpty) {
       final notificationsEnabled = await NotificationService()
           .areNotificationsEnabled();
 
       if (notificationsEnabled) {
-        final shortestFrequency = wateredPlants
+        final shortestFrequency = _plants
+            .where((plant) => wateredPlantIds.contains(plant.id))
             .map((plant) => plant.frequencyInDays)
             .reduce((a, b) => a < b ? a : b);
 
         await NotificationService().scheduleWateringSummary(
-          plantNames: wateredPlants.map((plant) => plant.name).toList(),
+          plantNames: _plants
+              .where((plant) => wateredPlantIds.contains(plant.id))
+              .map((plant) => plant.name)
+              .toList(),
           days: shortestFrequency,
         );
       }
@@ -158,6 +162,8 @@ class PlantProvider extends ChangeNotifier {
 
     await _savePlants();
     notifyListeners();
+
+    return wateredPlantIds;
   }
 
   void editPlant(
@@ -248,8 +254,8 @@ class PlantProvider extends ChangeNotifier {
 
   void deleteTask(int index) => deletePlant(index);
 
-  Future<void> waterAll() => waterAllPlants();
-
+  Future<List<String>> waterAll() => waterAllPlants();
+  
   void editTask(
     String id,
     String newName,

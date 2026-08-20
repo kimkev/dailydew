@@ -20,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // We keep this because Tab selection is "UI State," not "Global Data"
   int _selectedIndex = 0;
+  bool _isAddingPlant = false;
 
   void _showAddPlantDialog() {
     final nameController = TextEditingController();
@@ -79,7 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                       onChanged: (value) {
                         if (value == null) return;
-
                         setDialogState(() {
                           selectedPlantType = value;
                         });
@@ -115,7 +115,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-
                     TextField(
                       controller: freqController,
                       decoration: const InputDecoration(
@@ -142,19 +141,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     int startingGrowth = 0;
                     switch (selectedAgeOption) {
                       case 'weeks':
-                        startingGrowth = 20; // 20% grown
+                        startingGrowth = 20;
                         break;
                       case 'months':
-                        startingGrowth = 50; // 50% grown
+                        startingGrowth = 50;
                         break;
                       case 'years':
-                        startingGrowth = 80; // 80% grown (mature)
+                        startingGrowth = 80;
                         break;
                       default:
-                        startingGrowth = 0; // New plant
+                        startingGrowth = 0;
                     }
 
-                    // Calculate dateAdded based on age
                     DateTime dateAdded;
                     switch (selectedAgeOption) {
                       case 'weeks':
@@ -176,11 +174,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         dateAdded = DateTime.now();
                     }
 
-                    // Calculate position: 3 columns, auto-place from top to bottom
                     final existingPlants = plantProvider.plants;
-                    const xPositions = [0.22, 0.50, 0.76]; // 3 columns
-
-                    // 10 rows, adjust spacing as needed
+                    const xPositions = [0.22, 0.50, 0.76];
                     const yPositions = [
                       0.20,
                       0.32,
@@ -194,18 +189,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       1.28,
                     ];
 
-                    final maxSlots =
-                        xPositions.length * yPositions.length; // 30
+                    final maxSlots = xPositions.length * yPositions.length;
                     final usableSlots = List.generate(maxSlots, (i) => i);
-
                     final plantNumber = existingPlants.length;
                     final slot = usableSlots[plantNumber % usableSlots.length];
-
                     final column = slot % 3;
                     final row = slot ~/ 3;
-
                     final nextX = xPositions[column];
                     final nextY = yPositions[row];
+
+                    // ✅ Pop dialog FIRST, then add plant
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext);
+                    }
 
                     await plantProvider.addPlant(
                       Plant(
@@ -223,10 +219,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                     await SoundService.instance.playPlantAdded();
-
-                    if (dialogContext.mounted) {
-                      Navigator.pop(dialogContext);
-                    }
                   },
                   child: const Text('Add'),
                 ),
@@ -259,18 +251,12 @@ class _HomeScreenState extends State<HomeScreen> {
           if (plantProvider.plants.any(plantProvider.isPlantThirsty))
             TextButton.icon(
               onPressed: () async {
-                // Track which plants we're about to water
-                final thirstyPlantIds = plantProvider.plants
-                    .where(plantProvider.isPlantThirsty)
-                    .map((plant) => plant.id)
-                    .toList();
-
-                final thirstyCount = thirstyPlantIds.length;
-
-                // Water all thirsty plants
-                await plantProvider.waterAll();
+                // Water all thirsty plants and get the list of watered plant IDs
+                final wateredPlantIds = await plantProvider.waterAll();
                 await SoundService.instance.playWaterAll();
                 if (!context.mounted) return;
+
+                final thirstyCount = wateredPlantIds.length;
 
                 // Show confirmation with undo
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -297,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           context,
                           listen: false,
                         );
-                        for (var plantId in thirstyPlantIds) {
+                        for (var plantId in wateredPlantIds) {
                           p.undoPlantWatering(plantId);
                         }
                       },

@@ -222,11 +222,15 @@ class Plant {
     }
 
     growthLevel = (growthLevel - progression).clamp(0, 99);
-    totalCompletions--;
+    totalCompletions = totalCompletions > 0 ? totalCompletions - 1 : 0;
 
     if (currentStreak > 0) {
       currentStreak--;
     }
+
+    lastCompleted = DateTime.now().subtract(
+      Duration(days: frequencyInDays + 1),
+    );
   }
 
   // Convert to Map
