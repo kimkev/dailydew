@@ -152,27 +152,33 @@ class _HomeScreenState extends State<HomeScreen> {
                         startingGrowth = 0;
                     }
 
-                    DateTime dateAdded;
+                    final now = DateTime.now();
+
+                    // This is always when the record was created in Daily Dew.
+                    final dateAdded = now;
+
+                    // This represents the plant's estimated real-world age.
+                    DateTime estimatedBirthDate;
+
                     switch (selectedAgeOption) {
                       case 'weeks':
-                        dateAdded = DateTime.now().subtract(
+                        estimatedBirthDate = now.subtract(
                           const Duration(days: 21),
                         );
                         break;
                       case 'months':
-                        dateAdded = DateTime.now().subtract(
+                        estimatedBirthDate = now.subtract(
                           const Duration(days: 90),
                         );
                         break;
                       case 'years':
-                        dateAdded = DateTime.now().subtract(
+                        estimatedBirthDate = now.subtract(
                           const Duration(days: 365),
                         );
                         break;
                       default:
-                        dateAdded = DateTime.now();
+                        estimatedBirthDate = now; // New seed/seedling
                     }
-
                     final existingPlants = plantProvider.plants;
                     const xPositions = [0.22, 0.50, 0.76];
                     const yPositions = [
@@ -204,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     await plantProvider.addPlant(
                       Plant(
-                        id: DateTime.now().toString(),
+                        id: now.toIso8601String(),
                         name: name,
                         category: selectedPlantType,
                         frequencyInDays: frequency,
@@ -213,6 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         growthLevel: startingGrowth,
                         dateAdded: dateAdded,
+                        estimatedBirthDate: estimatedBirthDate,
                         positionX: nextX.clamp(0.1, 0.9),
                         positionY: nextY.clamp(0.1, 0.9),
                       ),

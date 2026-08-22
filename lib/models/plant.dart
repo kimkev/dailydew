@@ -7,6 +7,7 @@ class Plant {
   int frequencyInDays; // e.g., 1 for daily, 7 for weekly
   DateTime lastCompleted;
   DateTime dateAdded;
+  DateTime estimatedBirthDate;
   int growthLevel;
   int totalCompletions;
   double? positionX; // 0.0 to 1.0
@@ -21,13 +22,15 @@ class Plant {
     this.frequencyInDays = 1,
     required this.lastCompleted,
     DateTime? dateAdded,
+    DateTime? estimatedBirthDate,
     this.growthLevel = 0,
     this.totalCompletions = 0,
     this.positionX,
     this.positionY,
     this.currentStreak = 0,
     this.longestStreak = 0,
-  }) : dateAdded = dateAdded ?? DateTime.now();
+  }) : dateAdded = dateAdded ?? DateTime.now(),
+       estimatedBirthDate = estimatedBirthDate ?? DateTime.now();
 
   bool isThirstyAt({
     required DateTime now,
@@ -242,6 +245,7 @@ class Plant {
       'frequencyInDays': frequencyInDays,
       'lastCompleted': lastCompleted.toIso8601String(),
       'dateAdded': dateAdded.toIso8601String(),
+      'estimatedBirthDate': estimatedBirthDate.toIso8601String(),
       'growthLevel': growthLevel,
       'totalCompletions': totalCompletions,
       'positionX': positionX,
@@ -264,6 +268,11 @@ class Plant {
       dateAdded: map['dateAdded'] != null
           ? DateTime.parse(map['dateAdded'])
           : DateTime.now(),
+      estimatedBirthDate: map['estimatedBirthDate'] != null
+          ? DateTime.parse(map['estimatedBirthDate'])
+          : (map['dateAdded'] != null
+                ? DateTime.parse(map['dateAdded'])
+                : DateTime.now()),
       growthLevel: map['growthLevel'] ?? 0,
       totalCompletions: map['totalCompletions'] ?? 0,
       positionX: map['positionX'] != null

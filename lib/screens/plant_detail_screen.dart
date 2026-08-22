@@ -72,7 +72,9 @@ class PlantDetailScreen extends StatelessWidget {
                 icon: Icons.trending_up,
                 title: 'Growth Level',
                 value: '${currentPlant.growthLevel}%',
-                subtitle: _getGrowthStageText(currentPlant.growthLevel),
+                subtitle: currentPlant.growthLevel >= 99
+                    ? _getPlantAgeSubtitle(currentPlant)
+                    : _getGrowthStageText(currentPlant.growthLevel),
               ),
               const SizedBox(height: 16),
 
@@ -106,22 +108,30 @@ class PlantDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              _buildStatCard(
-                context,
-                icon: Icons.calendar_today,
-                title: 'Date Added',
-                value:
-                    '${currentPlant.dateAdded.month}/${currentPlant.dateAdded.day}/${currentPlant.dateAdded.year}',
-                subtitle: '',
-              ),
-              const SizedBox(height: 16),
-
-              _buildStatCard(
-                context,
-                icon: Icons.timer,
-                title: 'Plant Age',
-                value: _getPlantAge(currentPlant.dateAdded),
-                subtitle: 'Keep nurturing it!',
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      context,
+                      icon: Icons.calendar_today,
+                      title: 'Added to Daily Dew',
+                      value:
+                          '${currentPlant.dateAdded.month}/${currentPlant.dateAdded.day}/${currentPlant.dateAdded.year}',
+                      subtitle: '',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatCard(
+                      context,
+                      icon: Icons.timer,
+                      title: 'Plant Age',
+                      value:
+                          'About ${_getPlantAge(currentPlant.estimatedBirthDate)}',
+                      subtitle: '',
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 
@@ -235,8 +245,10 @@ class PlantDetailScreen extends StatelessWidget {
   String _getPlantAge(DateTime dateAdded) {
     final now = DateTime.now();
     final difference = now.difference(dateAdded);
-
-    if (difference.inDays < 7) {
+    
+    if (difference.inDays == 0) {
+      return 'new';
+    } else if (difference.inDays < 7) {
       return '${difference.inDays} days';
     } else if (difference.inDays < 30) {
       final weeks = difference.inDays ~/ 7;
@@ -252,5 +264,11 @@ class PlantDetailScreen extends StatelessWidget {
       }
       return '$years ${years == 1 ? 'year' : 'years'}';
     }
+  }
+
+  String _getPlantAgeSubtitle(Plant plant) {
+    return plant.growthLevel >= 99
+        ? 'Fully grown and thriving!'
+        : 'Keep nurturing it!';
   }
 }
