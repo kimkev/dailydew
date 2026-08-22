@@ -132,9 +132,9 @@ class MyApp extends StatelessWidget {
             ),
           ),
 
-          initialRoute: seenOnboarding ? '/home' : '/',
+          home: seenOnboarding ? const HomeScreen() : const OnboardingScreen(),
+
           routes: {
-            '/': (context) => const OnboardingScreen(),
             '/home': (context) => const HomeScreen(),
             '/settings': (context) => const SettingsScreen(),
           },

@@ -20,7 +20,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // We keep this because Tab selection is "UI State," not "Global Data"
   int _selectedIndex = 0;
-  bool _isAddingPlant = false;
 
   void _showAddPlantDialog() {
     final nameController = TextEditingController();

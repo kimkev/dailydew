@@ -25,9 +25,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await prefs.setInt('reminderMinute', _selectedTime.minute);
     await prefs.setBool('notificationsEnabled', _remindersEnabled);
 
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-    }
+    if (!mounted) return;
+
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
