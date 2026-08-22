@@ -19,6 +19,8 @@ class _GardenViewState extends State<GardenView>
   late Animation<double> _beeAnim;
   late Animation<double> _butterflyAnim;
   late Animation<double> _rippleAnim;
+  late Animation<double> _wormAnim;
+  final GlobalKey _gardenStackKey = GlobalKey();
 
   @override
   void initState() {
@@ -45,6 +47,11 @@ class _GardenViewState extends State<GardenView>
 
     // Ripples: gentle up-down
     _rippleAnim = Tween<double>(begin: -2.0, end: 2.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+
+    // Worm: small, gentle up-and-down movement.
+    _wormAnim = Tween<double>(begin: -3.0, end: 3.0).animate(
       CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
     );
 
@@ -151,6 +158,7 @@ class _GardenViewState extends State<GardenView>
                       ),
                     ),
                     child: Stack(
+                      key: _gardenStackKey,
                       clipBehavior: Clip.none,
                       children: [
                         ..._buildBackgroundDecor(),
@@ -172,28 +180,62 @@ class _GardenViewState extends State<GardenView>
                               (plant.growthLevel *
                                   0.15); // subtle vertical growth
 
+                          final plantEmojiSize = 30 + (plant.growthLevel * 0.4);
+
+                          // Includes the soil width plus enough vertical room for emoji + name tag.
+                          final plantHitWidth = soilWidth > plantEmojiSize
+                              ? soilWidth
+                              : plantEmojiSize;
+
+                          final plantHitHeight =
+                              plantEmojiSize + soilHeight + 24;
+
+                          final halfPlantWidth = plantHitWidth / 2;
+                          final halfPlantHeight = plantHitHeight / 2;
+
                           return Positioned(
-                            left: x * availableWidth - 40,
-                            top: y * availableHeight - 40,
+                            left: x * availableWidth - halfPlantWidth,
+                            top: y * availableHeight - halfPlantHeight,
                             child: GestureDetector(
                               onPanStart: (_) {
                                 plantProvider.selectPlant(plant.id);
                                 HapticFeedback.lightImpact();
                               },
                               onPanUpdate: (details) {
-                                final RenderBox box =
-                                    context.findRenderObject() as RenderBox;
+                                final RenderBox? box =
+                                    _gardenStackKey.currentContext
+                                            ?.findRenderObject()
+                                        as RenderBox?;
+
+                                if (box == null) return;
 
                                 final localOffset = box.globalToLocal(
                                   details.globalPosition,
                                 );
 
-                                final double newX =
-                                    localOffset.dx / availableWidth;
-                                final double newY =
-                                    localOffset.dy / availableHeight;
+                                final minX = halfPlantWidth;
+                                final maxX = box.size.width - halfPlantWidth;
+                                // Allow the plant crown to approach the top inner fence.
+                                // Keep a small safety inset so it does not disappear behind the frame.
+                                final minY = (halfPlantHeight - 22).clamp(
+                                  0.0,
+                                  double.infinity,
+                                );
+                                final maxY = box.size.height - halfPlantHeight;
+                                final clampedX = localOffset.dx.clamp(
+                                  minX,
+                                  maxX,
+                                );
+                                final clampedY = localOffset.dy.clamp(
+                                  minY,
+                                  maxY,
+                                );
 
-                                plantProvider.movePlant(plant.id, newX, newY);
+                                plantProvider.movePlant(
+                                  plant.id,
+                                  clampedX / box.size.width,
+                                  clampedY / box.size.height,
+                                );
                               },
                               onPanEnd: (_) {
                                 plantProvider.savePositions();
@@ -204,7 +246,7 @@ class _GardenViewState extends State<GardenView>
                                 children: [
                                   Stack(
                                     alignment: Alignment.bottomCenter,
-                                    clipBehavior: Clip.none,
+                                    clipBehavior: Clip.hardEdge,
                                     children: [
                                       // Soil patch: light when thirsty, dark after watering.
                                       AnimatedContainer(
@@ -571,6 +613,108 @@ class _GardenViewState extends State<GardenView>
           opacity: 0.20,
           child: const Text('🌸', style: TextStyle(fontSize: 13)),
         ),
+      ),
+      // Wide, heavy-soil ripple lines.
+      Positioned(
+        top: 244,
+        left: 24,
+        child: Opacity(
+          opacity: 0.62,
+          child: Transform.scale(
+            scaleX: 2.15,
+            scaleY: 0.72,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '〰',
+              style: TextStyle(
+                fontSize: 28,
+                color: Color(0xFF2B1712), // deep, heavy soil brown
+                fontWeight: FontWeight.w900,
+                height: 0.8,
+              ),
+            ),
+          ),
+        ),
+      ),
+
+      Positioned(
+        top: 260,
+        left: 40,
+        child: Opacity(
+          opacity: 0.52,
+          child: Transform.scale(
+            scaleX: 2.45,
+            scaleY: 0.65,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '〰',
+              style: TextStyle(
+                fontSize: 26,
+                color: Color(0xFF2B1712),
+                fontWeight: FontWeight.w900,
+                height: 0.8,
+              ),
+            ),
+          ),
+        ),
+      ),
+
+      Positioned(
+        top: 276,
+        left: 22,
+        child: Opacity(
+          opacity: 0.44,
+          child: Transform.scale(
+            scaleX: 2.0,
+            scaleY: 0.60,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '〰',
+              style: TextStyle(
+                fontSize: 23,
+                color: Color(0xFF2B1712),
+                fontWeight: FontWeight.w900,
+                height: 0.8,
+              ),
+            ),
+          ),
+        ),
+      ),
+
+      // Caterpillar #1: gently bobbing over the upper soil ridge.
+      AnimatedBuilder(
+        animation: _wormAnim,
+        builder: (context, child) {
+          return Positioned(
+            top: 230 + _wormAnim.value,
+            left: 62,
+            child: Opacity(
+              opacity: 0.44,
+              child: Transform.rotate(
+                angle: -0.16,
+                child: const Text('🐛', style: TextStyle(fontSize: 24)),
+              ),
+            ),
+          );
+        },
+      ),
+
+      // Caterpillar #2: smaller, moving slightly opposite to the first.
+      AnimatedBuilder(
+        animation: _wormAnim,
+        builder: (context, child) {
+          return Positioned(
+            top: 265 - (_wormAnim.value * 0.7),
+            left: 32,
+            child: Opacity(
+              opacity: 0.36,
+              child: Transform.rotate(
+                angle: 0.20,
+                child: const Text('🐛', style: TextStyle(fontSize: 18)),
+              ),
+            ),
+          );
+        },
       ),
     ];
   }
