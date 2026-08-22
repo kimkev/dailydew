@@ -214,14 +214,16 @@ class _GardenViewState extends State<GardenView>
                                 );
 
                                 final minX = halfPlantWidth;
-                                final maxX = box.size.width - halfPlantWidth;
-                                // Allow the plant crown to approach the top inner fence.
-                                // Keep a small safety inset so it does not disappear behind the frame.
+                                final maxX = (box.size.width - halfPlantWidth)
+                                    .clamp(minX, double.infinity);
+
                                 final minY = (halfPlantHeight - 22).clamp(
                                   0.0,
                                   double.infinity,
                                 );
-                                final maxY = box.size.height - halfPlantHeight;
+                                final maxY = (box.size.height - halfPlantHeight)
+                                    .clamp(minY, double.infinity);
+
                                 final clampedX = localOffset.dx.clamp(
                                   minX,
                                   maxX,
